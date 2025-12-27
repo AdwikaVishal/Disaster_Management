@@ -1,0 +1,397 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* SenseSafe Unified Design System - Admin Aligned Theme */
+    --background: 210 20% 98%;
+    --foreground: 215 25% 15%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 215 25% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 215 25% 15%;
+
+    /* Primary: Calm Slate Blue */
+    --primary: 215 70% 45%;
+    --primary-foreground: 210 40% 98%;
+
+    /* Secondary: Soft Gray */
+    --secondary: 210 15% 93%;
+    --secondary-foreground: 215 25% 25%;
+
+    /* Muted: Light Gray */
+    --muted: 210 15% 96%;
+    --muted-foreground: 215 15% 50%;
+
+    /* Accent: Teal */
+    --accent: 175 60% 45%;
+    --accent-foreground: 0 0% 100%;
+
+    /* Destructive: Soft Red for Alerts */
+    --destructive: 0 65% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Warning: Soft Amber */
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+
+    /* Success: Calm Green */
+    --success: 152 60% 42%;
+    --success-foreground: 0 0% 100%;
+
+    /* Critical: Dark for high priority */
+    --critical: 0 0% 15%;
+    --critical-foreground: 0 0% 100%;
+
+    --border: 214 20% 90%;
+    --input: 214 20% 90%;
+    --ring: 215 70% 45%;
+
+    --radius: 0.75rem;
+
+    /* Custom Design Tokens */
+    --gradient-primary: linear-gradient(135deg, hsl(215, 70%, 45%) 0%, hsl(195, 70%, 50%) 100%);
+    --gradient-card: linear-gradient(180deg, hsl(0, 0%, 100%) 0%, hsl(210, 20%, 98%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(215, 70%, 40%) 0%, hsl(175, 60%, 45%) 100%);
+    --safe-gradient: linear-gradient(135deg, hsl(211, 84%, 45%) 0%, hsl(199, 89%, 48%) 100%);
+    --alert-gradient: linear-gradient(135deg, hsl(0, 72%, 51%) 0%, hsl(15, 80%, 55%) 100%);
+    
+    --shadow-soft: 0 2px 8px -2px hsl(215 25% 15% / 0.08);
+    --shadow-card: 0 4px 16px -4px hsl(215 25% 15% / 0.1);
+    --shadow-elevated: 0 8px 32px -8px hsl(215 25% 15% / 0.15);
+
+    /* User Dashboard Specific Colors (Admin-Aligned) */
+    --calm-blue: #e3f2fd;
+    --soft-red: #ffebee;
+    --accent-blue: #1976d2;
+    --user-bg: linear-gradient(135deg, #e3f2fd 0%, #ffffff 50%, #e3f2fd 100%);
+
+    --sidebar-background: 215 25% 12%;
+    --sidebar-foreground: 210 20% 95%;
+    --sidebar-primary: 215 70% 55%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 215 25% 18%;
+    --sidebar-accent-foreground: 210 20% 95%;
+    --sidebar-border: 215 25% 20%;
+    --sidebar-ring: 215 70% 55%;
+  }
+
+  .dark {
+    --background: 215 25% 10%;
+    --foreground: 210 20% 95%;
+
+    --card: 215 25% 13%;
+    --card-foreground: 210 20% 95%;
+
+    --popover: 215 25% 13%;
+    --popover-foreground: 210 20% 95%;
+
+    --primary: 215 70% 55%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 215 20% 20%;
+    --secondary-foreground: 210 20% 90%;
+
+    --muted: 215 20% 18%;
+    --muted-foreground: 215 15% 60%;
+
+    --accent: 175 55% 50%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 60% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --warning: 38 90% 55%;
+    --warning-foreground: 0 0% 100%;
+
+    --success: 152 55% 50%;
+    --success-foreground: 0 0% 100%;
+
+    --critical: 0 0% 85%;
+    --critical-foreground: 0 0% 10%;
+
+    --border: 215 20% 22%;
+    --input: 215 20% 22%;
+    --ring: 215 70% 55%;
+
+    --calm-blue: 211 50% 15%;
+    --soft-red: 0 50% 15%;
+
+    --sidebar-background: 215 25% 8%;
+    --sidebar-foreground: 210 20% 95%;
+    --sidebar-primary: 215 70% 55%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 215 25% 15%;
+    --sidebar-accent-foreground: 210 20% 95%;
+    --sidebar-border: 215 25% 18%;
+    --sidebar-ring: 215 70% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-family: 'Inter', 'Outfit', system-ui, sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold tracking-tight;
+    font-family: 'Inter', 'Outfit', system-ui, sans-serif;
+  }
+
+  /* Smooth scrolling for better UX */
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Focus styles for accessibility */
+  *:focus-visible {
+    @apply outline-none ring-2 ring-blue-500 ring-offset-2;
+  }
+}
+
+@layer components {
+  /* Command Center Styles */
+  .card-elevated {
+    @apply bg-card rounded-xl border border-border;
+    box-shadow: var(--shadow-card);
+  }
+
+  .metric-card {
+    @apply bg-card rounded-lg border border-border p-4 transition-all duration-200;
+    box-shadow: var(--shadow-soft);
+  }
+
+  .metric-card:hover {
+    box-shadow: var(--shadow-card);
+    @apply border-primary/20;
+  }
+
+  /* Dispatch Styles */
+  .glass-card {
+    @apply bg-card/80 backdrop-blur-xl border border-border/50 shadow-lg;
+  }
+
+  .btn-primary-gradient {
+    background: var(--safe-gradient);
+    @apply text-primary-foreground font-medium shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all duration-300;
+  }
+
+  .btn-alert-gradient {
+    background: var(--alert-gradient);
+    @apply text-destructive-foreground font-medium shadow-lg shadow-destructive/25 hover:shadow-xl hover:shadow-destructive/30 transition-all duration-300;
+  }
+
+  /* User Dashboard Specific Styles */
+  .user-hero-gradient {
+    background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
+  }
+
+  .user-card-shadow {
+    box-shadow: 0 4px 20px rgba(25, 118, 210, 0.1);
+  }
+
+  .user-card-hover {
+    @apply transition-all duration-300 hover:shadow-xl;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  }
+
+  .user-card-hover:hover {
+    box-shadow: 0 8px 30px rgba(25, 118, 210, 0.15);
+    transform: translateY(-2px);
+  }
+
+  /* Shared Styles */
+  .gradient-primary {
+    background: var(--gradient-primary);
+  }
+
+  .gradient-hero {
+    background: var(--gradient-hero);
+  }
+
+  .action-button {
+    @apply flex items-center gap-3 w-full px-4 py-3 rounded-lg font-medium transition-all duration-200;
+    @apply bg-secondary text-secondary-foreground;
+    @apply hover:bg-secondary/80 hover:shadow-md;
+  }
+
+  .action-button-primary {
+    @apply flex items-center gap-3 w-full px-4 py-3 rounded-lg font-medium transition-all duration-200;
+    background: var(--gradient-primary);
+    @apply text-primary-foreground;
+    @apply hover:opacity-90 hover:shadow-lg;
+  }
+
+  .action-button-danger {
+    @apply flex items-center gap-3 w-full px-4 py-3 rounded-lg font-medium transition-all duration-200;
+    @apply bg-destructive text-destructive-foreground;
+    @apply hover:bg-destructive/90 hover:shadow-lg;
+  }
+
+  .table-row {
+    @apply border-b border-border transition-colors duration-150;
+    @apply hover:bg-muted/50;
+  }
+
+  .status-badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+
+  .status-badge-success {
+    @apply status-badge bg-success/15 text-success;
+  }
+
+  .status-badge-warning {
+    @apply status-badge bg-warning/15 text-warning;
+  }
+
+  .status-badge-danger {
+    @apply status-badge bg-destructive/15 text-destructive;
+  }
+
+  .status-badge-info {
+    @apply status-badge bg-primary/15 text-primary;
+  }
+
+  .incident-card {
+    @apply bg-card rounded-xl border border-border p-4 hover:shadow-md transition-all duration-200;
+  }
+
+  .nav-item {
+    @apply flex flex-col items-center gap-1 p-2 rounded-lg transition-colors;
+  }
+
+  .nav-item-active {
+    @apply bg-primary/10 text-primary;
+  }
+
+  .priority-high {
+    @apply border-l-4 border-destructive;
+  }
+
+  .priority-medium {
+    @apply border-l-4 border-warning;
+  }
+
+  .priority-low {
+    @apply border-l-4 border-success;
+  }
+
+  /* Touch-friendly buttons for mobile */
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Loading skeleton */
+  .skeleton {
+    @apply animate-pulse bg-gray-200 rounded;
+  }
+
+  /* Error states */
+  .error-border {
+    @apply border-red-300 focus:border-red-500 focus:ring-red-500;
+  }
+
+  /* Success states */
+  .success-border {
+    @apply border-green-300 focus:border-green-500 focus:ring-green-500;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .fade-in {
+    animation: fadeIn 0.3s ease-out;
+  }
+
+  .slide-up {
+    animation: slideUp 0.4s ease-out;
+  }
+
+  .pulse-alert {
+    animation: pulseAlert 2s ease-in-out infinite;
+  }
+
+  .animate-pulse-soft {
+    animation: pulseSoft 2s ease-in-out infinite;
+  }
+
+  /* User Dashboard specific animations */
+  .bounce-gentle {
+    animation: bounceGentle 2s ease-in-out infinite;
+  }
+
+  .glow-blue {
+    box-shadow: 0 0 20px rgba(25, 118, 210, 0.3);
+  }
+
+  .glow-red {
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes pulseAlert {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+  }
+
+  @keyframes pulseSoft {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+  }
+
+  @keyframes bounceGentle {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+  }
+
+  /* High contrast mode support */
+  @media (prefers-contrast: high) {
+    .card-elevated {
+      @apply border-2 border-gray-900;
+    }
+    
+    .status-badge {
+      @apply border border-current;
+    }
+  }
+
+  /* Reduced motion support */
+  @media (prefers-reduced-motion: reduce) {
+    .fade-in,
+    .slide-up,
+    .pulse-alert,
+    .animate-pulse-soft,
+    .bounce-gentle {
+      animation: none;
+    }
+    
+    * {
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
