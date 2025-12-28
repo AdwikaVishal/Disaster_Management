@@ -45,23 +45,25 @@ public class SecurityConfig {
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
                 .authorizeHttpRequests(authz -> authz
                         // Public endpoints
-                        .requestMatchers("/auth/**").permitAll()
-                        .requestMatchers("/public/**").permitAll()
+                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/public/**").permitAll()
                         .requestMatchers("/h2-console/**").permitAll()
                         .requestMatchers("/websocket/**").permitAll()
-                        .requestMatchers("/emergency/sos").permitAll()
+                        .requestMatchers("/api/emergency/sos").permitAll()
                         .requestMatchers("/api/incidents/**").permitAll()
 
                         // Admin only endpoints
-                        .requestMatchers("/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/blockchain/**").hasRole("ADMIN")
-                        .requestMatchers("/volunteers/applications/review/**").hasRole("ADMIN")
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/blockchain/**").hasRole("ADMIN")
+                        .requestMatchers("/api/volunteers/applications/review/**").hasRole("ADMIN")
 
                         // User and Admin endpoints
-                        .requestMatchers("/incidents/**").hasAnyRole("USER", "ADMIN", "VOLUNTEER")
-                        .requestMatchers("/users/profile/**").hasAnyRole("USER", "ADMIN", "VOLUNTEER")
-                        .requestMatchers("/volunteers/apply").hasRole("USER")
-                        .requestMatchers("/emergency/contacts").hasAnyRole("USER", "ADMIN", "VOLUNTEER")
+                        // Note: GET /api/incidents/** is allowed for all by permitAll() above.
+                        // Specific write operations might be restricted inside the controller
+                        // (@PreAuthorize)
+                        .requestMatchers("/api/users/profile/**").hasAnyRole("USER", "ADMIN", "VOLUNTEER")
+                        .requestMatchers("/api/volunteers/apply").hasRole("USER")
+                        .requestMatchers("/api/emergency/contacts").hasAnyRole("USER", "ADMIN", "VOLUNTEER")
 
                         // All other requests need authentication
                         .anyRequest().authenticated());
