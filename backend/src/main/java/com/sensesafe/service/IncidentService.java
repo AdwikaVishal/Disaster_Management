@@ -15,6 +15,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.Optional;
 
 @Service
@@ -52,7 +53,7 @@ public class IncidentService {
         // Set initial values
         incident.setCreatedAt(LocalDateTime.now());
         incident.setUpdatedAt(LocalDateTime.now());
-        
+
         // Reverse geocode location if address not provided
         if (incident.getAddress() == null || incident.getAddress().isEmpty()) {
             String address = geolocationService.reverseGeocode(incident.getLatitude(), incident.getLongitude());
@@ -61,14 +62,12 @@ public class IncidentService {
 
         // Calculate distance to nearest responder
         Double distance = geolocationService.calculateDistanceToNearestResponder(
-            incident.getLatitude(), incident.getLongitude(), incident.getType()
-        );
+                incident.getLatitude(), incident.getLongitude(), incident.getType());
         incident.setDistanceToResponder(distance);
 
         // Check if near sensitive location
         boolean nearSensitive = geolocationService.isNearSensitiveLocation(
-            incident.getLatitude(), incident.getLongitude()
-        );
+                incident.getLatitude(), incident.getLongitude());
         incident.setNearSensitiveLocation(nearSensitive);
 
         // Save incident first
@@ -117,8 +116,7 @@ public class IncidentService {
 
     public List<Incident> findActiveIncidentsNearLocation(Double latitude, Double longitude, Double radiusKm) {
         return incidentRepository.findActiveIncidentsWithinRadius(
-            latitude, longitude, radiusKm, Incident.Status.IN_PROGRESS
-        );
+                latitude, longitude, radiusKm, Incident.Status.IN_PROGRESS);
     }
 
     public List<Incident> findCriticalIncidents() {
@@ -146,7 +144,8 @@ public class IncidentService {
             try {
                 Map<String, Object> blockchainResult = blockchainService.logResolved(incidentId);
                 if ((Boolean) blockchainResult.get("success")) {
-                    System.out.println("Incident resolution logged on blockchain: " + blockchainResult.get("transactionHash"));
+                    System.out.println(
+                            "Incident resolution logged on blockchain: " + blockchainResult.get("transactionHash"));
                 }
             } catch (Exception e) {
                 System.err.println("Failed to log resolution on blockchain: " + e.getMessage());
@@ -158,7 +157,8 @@ public class IncidentService {
             try {
                 Map<String, Object> blockchainResult = blockchainService.logVerified(incidentId);
                 if ((Boolean) blockchainResult.get("success")) {
-                    System.out.println("Incident verification logged on blockchain: " + blockchainResult.get("transactionHash"));
+                    System.out.println(
+                            "Incident verification logged on blockchain: " + blockchainResult.get("transactionHash"));
                 }
             } catch (Exception e) {
                 System.err.println("Failed to log verification on blockchain: " + e.getMessage());
@@ -166,21 +166,21 @@ public class IncidentService {
         }
 
         Incident updatedIncident = incidentRepository.save(incident);
-        
+
         // Send status update notifications
         notificationService.notifyIncidentStatusUpdate(updatedIncident, oldStatus);
 
         return updatedIncident;
     }
 
-    public IncidentVerification verifyIncident(Long incidentId, Long verifierId, 
-                                             IncidentVerification.VerificationType type, 
-                                             Boolean isAccurate, String comments) {
+    public IncidentVerification verifyIncident(Long incidentId, Long verifierId,
+            IncidentVerification.VerificationType type,
+            Boolean isAccurate, String comments) {
         Incident incident = incidentRepository.findById(incidentId)
-            .orElseThrow(() -> new RuntimeException("Incident not found"));
-        
+                .orElseThrow(() -> new RuntimeException("Incident not found"));
+
         User verifier = userService.findById(verifierId)
-            .orElseThrow(() -> new RuntimeException("Verifier not found"));
+                .orElseThrow(() -> new RuntimeException("Verifier not found"));
 
         IncidentVerification verification = new IncidentVerification(incident, verifier, type, isAccurate);
         verification.setComments(comments);
@@ -192,9 +192,12 @@ public class IncidentService {
         } else if (type == IncidentVerification.VerificationType.FLAG) {
             incident.setFlags(incident.getFlags() + 1);
         }
-        
+
         incident.setVerificationCount(incident.getVerificationCount() + 1);
         incidentRepository.save(incident);
+
+        // Re-run ML analysis to update fraud/risk scores based on new feedback
+        performMLAnalysis(incident);
 
         // Check if incident should be auto-verified based on community consensus
         checkAutoVerification(incident);
@@ -208,99 +211,94 @@ public class IncidentService {
 
     public Map<String, Object> getIncidentStatistics(int days) {
         LocalDateTime since = LocalDateTime.now().minusDays(days);
-        
+
         Long totalIncidents = incidentRepository.countIncidentsAfter(since);
         List<Object[]> typeStats = incidentRepository.getIncidentTypeStatistics(since);
         List<Object[]> severityStats = incidentRepository.getIncidentSeverityStatistics(since);
-        
+
         return Map.of(
-            "totalIncidents", totalIncidents,
-            "typeStatistics", typeStats,
-            "severityStatistics", severityStats,
-            "period", days + " days"
-        );
+                "totalIncidents", totalIncidents,
+                "typeStatistics", typeStats,
+                "severityStatistics", severityStats,
+                "period", days + " days");
     }
 
     public Map<String, Object> getAnalytics(int hours) {
         LocalDateTime since = LocalDateTime.now().minusHours(hours);
-        
+
         List<Incident> incidents = incidentRepository.findRecentIncidents(since);
-        
+
         // Calculate analytics
         Map<String, Object> analytics = new HashMap<>();
-        
+
         // Incidents by type
         Map<String, Long> typeCount = incidents.stream()
-            .collect(java.util.stream.Collectors.groupingBy(
-                incident -> incident.getType().name(),
-                java.util.stream.Collectors.counting()
-            ));
+                .collect(java.util.stream.Collectors.groupingBy(
+                        incident -> incident.getType().name(),
+                        java.util.stream.Collectors.counting()));
         analytics.put("incidentsByType", typeCount);
-        
+
         // Risk by area (simplified - group by first part of address)
         Map<String, Double> riskByArea = incidents.stream()
-            .filter(i -> i.getAddress() != null)
-            .collect(java.util.stream.Collectors.groupingBy(
-                incident -> incident.getAddress().split(",")[0].trim(),
-                java.util.stream.Collectors.averagingDouble(
-                    incident -> incident.getRiskScore() != null ? incident.getRiskScore() : 50.0
-                )
-            ));
+                .filter(i -> i.getAddress() != null)
+                .collect(java.util.stream.Collectors.groupingBy(
+                        incident -> incident.getAddress().split(",")[0].trim(),
+                        java.util.stream.Collectors.averagingDouble(
+                                incident -> incident.getRiskScore() != null ? incident.getRiskScore() : 50.0)));
         analytics.put("riskByArea", riskByArea);
-        
+
         // Severity distribution
         Map<String, Long> severityCount = incidents.stream()
-            .collect(java.util.stream.Collectors.groupingBy(
-                incident -> incident.getSeverity().name(),
-                java.util.stream.Collectors.counting()
-            ));
+                .collect(java.util.stream.Collectors.groupingBy(
+                        incident -> incident.getSeverity().name(),
+                        java.util.stream.Collectors.counting()));
         analytics.put("severityDistribution", severityCount);
-        
+
         // Real-time metrics
         long activeIncidents = incidents.stream()
-            .filter(i -> i.getStatus() == Incident.Status.IN_PROGRESS || i.getStatus() == Incident.Status.NEW)
-            .count();
-        
+                .filter(i -> i.getStatus() == Incident.Status.IN_PROGRESS || i.getStatus() == Incident.Status.NEW)
+                .count();
+
         long criticalIncidents = incidents.stream()
-            .filter(i -> i.getSeverity() == Incident.Severity.CRITICAL)
-            .count();
-        
+                .filter(i -> i.getSeverity() == Incident.Severity.CRITICAL)
+                .count();
+
         long duplicateDetected = incidents.stream()
-            .filter(i -> i.getSimilarityScore() != null && i.getSimilarityScore() > 0.8)
-            .count();
-        
+                .filter(i -> i.getSimilarityScore() != null && i.getSimilarityScore() > 0.8)
+                .count();
+
         Map<String, Object> realTimeMetrics = new HashMap<>();
         realTimeMetrics.put("totalIncidents", incidents.size());
         realTimeMetrics.put("activeIncidents", activeIncidents);
         realTimeMetrics.put("criticalIncidents", criticalIncidents);
         realTimeMetrics.put("duplicateDetected", duplicateDetected);
         realTimeMetrics.put("mlAccuracy", 87.5 + Math.random() * 10); // Mock ML accuracy
-        
+
         analytics.put("realTimeMetrics", realTimeMetrics);
-        
+
         return analytics;
     }
 
     private void performMLAnalysis(Incident incident) {
         try {
-            // Fraud analysis
+            // 1. Similarity analysis (First, to feed into fraud detection)
+            Map<String, Object> similarityResult = mlAnalysisService.analyzeSimilarity(incident);
+            if ((Boolean) similarityResult.get("success")) {
+                incident.setSimilarityScore((Double) similarityResult.get("topMatchScore"));
+            }
+
+            // 2. Fraud analysis (Uses similarity score)
             Map<String, Object> fraudResult = mlAnalysisService.analyzeFraud(incident, incident.getReporter());
             if ((Boolean) fraudResult.get("success")) {
                 incident.setFraudProbability((Double) fraudResult.get("fraudProbability"));
                 incident.setIsFraud((Boolean) fraudResult.get("isFraud"));
             }
 
-            // Risk analysis
+            // 3. Risk analysis
             Map<String, Object> riskResult = mlAnalysisService.analyzeRisk(incident);
             if ((Boolean) riskResult.get("success")) {
                 incident.setRiskScore((Double) riskResult.get("riskScore"));
                 incident.setRiskLevel((String) riskResult.get("riskLevel"));
-            }
-
-            // Similarity analysis
-            Map<String, Object> similarityResult = mlAnalysisService.analyzeSimilarity(incident);
-            if ((Boolean) similarityResult.get("success")) {
-                incident.setSimilarityScore((Double) similarityResult.get("topMatchScore"));
             }
 
             incidentRepository.save(incident);
@@ -311,28 +309,56 @@ public class IncidentService {
     }
 
     private void autoDispatchEmergencyServices(Incident incident) {
-        // Determine required emergency services based on incident type
-        List<EmergencyResponse.ResponseType> requiredServices = 
-            determineRequiredServices(incident.getType());
+        // 1. Get base requirements from static rules
+        List<EmergencyResponse.ResponseType> requiredServices = determineRequiredServices(incident.getType());
+
+        // 2. Get ML-enhanced recommendations
+        Map<String, Object> guidedQuestions = new HashMap<>();
+        guidedQuestions.put("hasInjuries",
+                incident.getInjuriesReported() != null && incident.getInjuriesReported() > 0);
+        guidedQuestions.put("vehiclesInvolved", incident.getType() == Incident.IncidentType.ROAD_ACCIDENT ? 1 : 0);
+        guidedQuestions.put("hasFireRisk", incident.getType() == Incident.IncidentType.FIRE
+                || incident.getType() == Incident.IncidentType.GAS_LEAK);
+
+        try {
+            Map<String, Object> recommendations = mlAnalysisService.recommendEmergencyServices(incident,
+                    guidedQuestions);
+
+            if ((Boolean) recommendations.get("recommendAmbulance")
+                    && !requiredServices.contains(EmergencyResponse.ResponseType.AMBULANCE)) {
+                requiredServices.add(EmergencyResponse.ResponseType.AMBULANCE);
+            }
+            if ((Boolean) recommendations.get("recommendPolice")
+                    && !requiredServices.contains(EmergencyResponse.ResponseType.POLICE)) {
+                requiredServices.add(EmergencyResponse.ResponseType.POLICE);
+            }
+            if ((Boolean) recommendations.get("recommendFire")
+                    && !requiredServices.contains(EmergencyResponse.ResponseType.FIRE_BRIGADE)) {
+                requiredServices.add(EmergencyResponse.ResponseType.FIRE_BRIGADE);
+            }
+        } catch (Exception e) {
+            System.err.println("ML recommendation failed, using static rules only: " + e.getMessage());
+        }
 
         for (EmergencyResponse.ResponseType serviceType : requiredServices) {
-            EmergencyResponse response = new EmergencyResponse(incident, serviceType, 
-                generateResourceId(serviceType));
-            
+            EmergencyResponse response = new EmergencyResponse(incident, serviceType,
+                    generateResourceId(serviceType));
+
             // Calculate estimated arrival time
             Integer estimatedArrival = geolocationService.calculateEstimatedArrival(
-                incident.getLatitude(), incident.getLongitude(), serviceType
-            );
+                    incident.getLatitude(), incident.getLongitude(), serviceType);
             response.setEstimatedArrivalMinutes(estimatedArrival);
             response.setDistanceKm(incident.getDistanceToResponder());
 
             emergencyResponseRepository.save(response);
-            
+
             // Log resource allocation on blockchain (async to avoid blocking)
             try {
-                Map<String, Object> blockchainResult = blockchainService.logResource(incident.getId(), response.getResourceId());
+                Map<String, Object> blockchainResult = blockchainService.logResource(incident.getId(),
+                        response.getResourceId());
                 if ((Boolean) blockchainResult.get("success")) {
-                    System.out.println("Resource allocation logged on blockchain: " + blockchainResult.get("transactionHash"));
+                    System.out.println(
+                            "Resource allocation logged on blockchain: " + blockchainResult.get("transactionHash"));
                 }
             } catch (Exception e) {
                 System.err.println("Failed to log resource allocation on blockchain: " + e.getMessage());
@@ -344,20 +370,21 @@ public class IncidentService {
     }
 
     private List<EmergencyResponse.ResponseType> determineRequiredServices(Incident.IncidentType type) {
+        // Returns a mutable list to allow adding ML recommendations
         return switch (type) {
-            case FIRE -> List.of(EmergencyResponse.ResponseType.FIRE_BRIGADE, 
-                               EmergencyResponse.ResponseType.AMBULANCE);
-            case MEDICAL_EMERGENCY -> List.of(EmergencyResponse.ResponseType.AMBULANCE, 
-                                            EmergencyResponse.ResponseType.HOSPITAL);
-            case VIOLENCE -> List.of(EmergencyResponse.ResponseType.POLICE, 
-                                   EmergencyResponse.ResponseType.AMBULANCE);
-            case ROAD_ACCIDENT -> List.of(EmergencyResponse.ResponseType.POLICE, 
-                                        EmergencyResponse.ResponseType.AMBULANCE);
-            case GAS_LEAK -> List.of(EmergencyResponse.ResponseType.GAS_EMERGENCY, 
-                                   EmergencyResponse.ResponseType.FIRE_BRIGADE);
-            case FLOOD -> List.of(EmergencyResponse.ResponseType.RESCUE_TEAM, 
-                                EmergencyResponse.ResponseType.VOLUNTEER_TEAM);
-            default -> List.of(EmergencyResponse.ResponseType.POLICE);
+            case FIRE -> new ArrayList<>(List.of(EmergencyResponse.ResponseType.FIRE_BRIGADE,
+                    EmergencyResponse.ResponseType.AMBULANCE));
+            case MEDICAL_EMERGENCY -> new ArrayList<>(List.of(EmergencyResponse.ResponseType.AMBULANCE,
+                    EmergencyResponse.ResponseType.HOSPITAL));
+            case VIOLENCE -> new ArrayList<>(List.of(EmergencyResponse.ResponseType.POLICE,
+                    EmergencyResponse.ResponseType.AMBULANCE));
+            case ROAD_ACCIDENT -> new ArrayList<>(List.of(EmergencyResponse.ResponseType.POLICE,
+                    EmergencyResponse.ResponseType.AMBULANCE));
+            case GAS_LEAK -> new ArrayList<>(List.of(EmergencyResponse.ResponseType.GAS_EMERGENCY,
+                    EmergencyResponse.ResponseType.FIRE_BRIGADE));
+            case FLOOD -> new ArrayList<>(List.of(EmergencyResponse.ResponseType.RESCUE_TEAM,
+                    EmergencyResponse.ResponseType.VOLUNTEER_TEAM));
+            default -> new ArrayList<>(List.of(EmergencyResponse.ResponseType.POLICE));
         };
     }
 
@@ -367,18 +394,18 @@ public class IncidentService {
 
     private void checkAutoVerification(Incident incident) {
         // Auto-verify if enough positive verifications and low fraud probability
-        if (incident.getUpvotes() >= 3 && incident.getFlags() <= 1 && 
-            (incident.getFraudProbability() == null || incident.getFraudProbability() < 0.3)) {
-            
+        if (incident.getUpvotes() >= 3 && incident.getFlags() <= 1 &&
+                (incident.getFraudProbability() == null || incident.getFraudProbability() < 0.3)) {
+
             if (incident.getStatus() == Incident.Status.NEW) {
                 updateIncidentStatus(incident.getId(), Incident.Status.VERIFIED, null);
             }
         }
-        
+
         // Auto-reject if too many flags or high fraud probability
-        if (incident.getFlags() >= 3 || 
-            (incident.getFraudProbability() != null && incident.getFraudProbability() > 0.7)) {
-            
+        if (incident.getFlags() >= 3 ||
+                (incident.getFraudProbability() != null && incident.getFraudProbability() > 0.7)) {
+
             if (incident.getStatus() == Incident.Status.NEW) {
                 updateIncidentStatus(incident.getId(), Incident.Status.REJECTED, null);
                 userService.incrementFlaggedReportCount(incident.getReporter().getId());

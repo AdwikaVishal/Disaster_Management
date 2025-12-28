@@ -100,5 +100,62 @@ export const IncidentService = {
             console.error('Get location info error:', error);
             return { success: false, message: 'Failed to fetch location info' };
         }
+    },
+
+    // Get ML Severity Suggestion
+    suggestSeverity: async (data: any): Promise<{ success: boolean; suggestedSeverity?: string; riskScore?: number; explanation?: string; message?: string }> => {
+        try {
+            const token = AuthService.getToken();
+            const response = await fetch(`${API_URL}/suggest-severity`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(data),
+            });
+            const result = await response.json();
+            return result;
+        } catch (error) {
+            console.error('Severity suggestion error:', error);
+            return { success: false, message: 'Failed to get severity suggestion' };
+        }
+    },
+
+    // Get ML Emergency Recommendations
+    getEmergencyRecommendations: async (data: any): Promise<{ success: boolean; recommendAmbulance?: boolean; recommendPolice?: boolean; recommendFire?: boolean; explanation?: string; message?: string }> => {
+        try {
+            const token = AuthService.getToken();
+            const response = await fetch(`${API_URL}/emergency-recommendations`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(data),
+            });
+            const result = await response.json();
+            return result;
+        } catch (error) {
+            console.error('Emergency recommendation error:', error);
+            return { success: false, message: 'Failed to get emergency recommendations' };
+        }
+    },
+
+    // Check ML Service Health
+    getMLHealth: async (): Promise<{ success: boolean; mlServiceAvailable?: boolean; status?: string; message?: string }> => {
+        try {
+            const token = AuthService.getToken();
+            const response = await fetch(`${API_URL}/ml-health`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            const result = await response.json();
+            return result;
+        } catch (error) {
+            console.error('ML health check error:', error);
+            return { success: false, message: 'Failed to check ML health' };
+        }
     }
 };

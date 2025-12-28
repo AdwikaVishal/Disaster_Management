@@ -10,10 +10,14 @@ import {
     Menu,
     X,
     Shield,
-    LifeBuoy
+    LifeBuoy,
+    LogOut,
+    Loader2,
+    Siren
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
+import { BroadcastAlertPopup } from '@/components/BroadcastAlertPopup';
 
 const userLinks = [
     { name: 'Overview', href: '/dashboard', icon: LayoutDashboard },
@@ -25,15 +29,71 @@ const userLinks = [
 ];
 
 import { useAuth } from '@/context/AuthContext';
-import { LogOut } from 'lucide-react';
 
 export const DashboardLayout = () => {
     const { user, logout } = useAuth();
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const location = useLocation();
+    const [sosLoading, setSosLoading] = useState(false);
+
+    const handleSOSClick = () => {
+        setSosLoading(true);
+        if ('geolocation' in navigator) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const sosAlert = {
+                        id: `sos-${Date.now()}`,
+                        userId: user?.id || 'unknown',
+                        userName: `${user?.firstName || 'Citizen'} ${user?.lastName || ''}`.trim(),
+                        coords: {
+                            lat: position.coords.latitude,
+                            lng: position.coords.longitude
+                        },
+                        timestamp: Date.now(),
+                        message: "Requesting immediate emergency assistance!"
+                    };
+
+                    // Send to Admin (via LocalStorage for simulation)
+                    localStorage.setItem('active_sos_alert', JSON.stringify(sosAlert));
+                    // Trigger storage event for same-window testing
+                    window.dispatchEvent(new StorageEvent('storage', {
+                        key: 'active_sos_alert',
+                        newValue: JSON.stringify(sosAlert)
+                    }));
+
+                    alert("SOS Signal Sent! Emergency services have been notified of your location.");
+                    setSosLoading(false);
+                },
+                (error) => {
+                    console.error("SOS Location Error", error);
+                    alert("Could not get location. Sending SOS with last known location...");
+                    // Fallback SOS without precise location
+                    const sosAlert = {
+                        id: `sos-${Date.now()}`,
+                        userId: user?.id || 'unknown',
+                        userName: `${user?.firstName || 'Citizen'} ${user?.lastName || ''}`.trim(),
+                        coords: { lat: 20.5937, lng: 78.9629 }, // Default India Approx
+                        timestamp: Date.now(),
+                        message: "Requesting immediate emergency assistance! (Location unavailable)"
+                    };
+                    localStorage.setItem('active_sos_alert', JSON.stringify(sosAlert));
+                    window.dispatchEvent(new StorageEvent('storage', {
+                        key: 'active_sos_alert',
+                        newValue: JSON.stringify(sosAlert)
+                    }));
+                    setSosLoading(false);
+                },
+                { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+            );
+        } else {
+            alert("Geolocation not supported.");
+            setSosLoading(false);
+        }
+    };
 
     return (
         <div className="min-h-screen bg-background flex">
+            <BroadcastAlertPopup />
             {/* Sidebar - Desktop */}
             <aside className="hidden lg:flex w-64 flex-col border-r border-border bg-card fixed inset-y-0 z-40">
                 <div className="h-16 flex items-center px-6 border-b border-border">
@@ -146,8 +206,24 @@ export const DashboardLayout = () => {
                             <Bell className="w-5 h-5 text-muted-foreground" />
                             <span className="absolute top-2 right-2 w-2 h-2 bg-destructive rounded-full border border-background"></span>
                         </Button>
-                        <Button variant="default" size="sm" className="hidden sm:flex">
-                            SOS Emergency
+                        <Button
+                            variant="destructive"
+                            size="sm"
+                            className="hidden sm:flex font-bold animate-pulse shadow-lg shadow-red-500/20"
+                            onClick={handleSOSClick}
+                            disabled={sosLoading}
+                        >
+                            {sosLoading ? (
+                                <>
+                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                    SENDING...
+                                </>
+                            ) : (
+                                <>
+                                    <Siren className="w-4 h-4 mr-2" />
+                                    SOS EMERGENCY
+                                </>
+                            )}
                         </Button>
                     </div>
                 </header>

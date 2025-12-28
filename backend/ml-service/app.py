@@ -41,6 +41,7 @@ def initialize_models():
             'account_age_days': np.random.randint(1, 1000, 100),
             'total_reports_by_user': np.random.randint(1, 50, 100),
             'verified_user': np.random.randint(0, 2, 100),
+            'duplicate_score': np.random.uniform(0, 1, 100),  # New feature from similarity check
             'is_fraud': np.random.randint(0, 2, 100)  # Target variable
         })
         
@@ -51,7 +52,7 @@ def initialize_models():
         
         # Train fraud detection model
         fraud_features = ['incident_type_encoded', 'description_length', 'has_media', 
-                         'upvotes', 'flags', 'account_age_days', 'total_reports_by_user', 'verified_user']
+                         'upvotes', 'flags', 'account_age_days', 'total_reports_by_user', 'verified_user', 'duplicate_score']
         fraud_model = RandomForestClassifier(n_estimators=50, random_state=42)
         fraud_model.fit(fraud_data[fraud_features], fraud_data['is_fraud'])
         
@@ -62,6 +63,11 @@ def initialize_models():
             'injuries_reported': np.random.randint(0, 10, 100),
             'people_involved': np.random.randint(1, 50, 100),
             'near_sensitive_location': np.random.randint(0, 2, 100),
+            'has_bleeding': np.random.randint(0, 2, 100),
+            'has_unconscious_people': np.random.randint(0, 2, 100),
+            'has_fire_risk': np.random.randint(0, 2, 100),
+            'has_explosion_risk': np.random.randint(0, 2, 100),
+            'is_road_blocked': np.random.randint(0, 2, 100),
             'risk_score': np.random.randint(0, 101, 100)  # Target variable
         })
         
@@ -76,7 +82,8 @@ def initialize_models():
         
         # Train risk assessment model
         risk_features = ['incident_type_encoded', 'severity_encoded', 'injuries_reported', 
-                        'people_involved', 'near_sensitive_location']
+                        'people_involved', 'near_sensitive_location', 'has_bleeding', 
+                        'has_unconscious_people', 'has_fire_risk', 'has_explosion_risk', 'is_road_blocked']
         risk_model = RandomForestClassifier(n_estimators=50, random_state=42)
         risk_model.fit(risk_data[risk_features], risk_data['risk_score'] > 50)  # Binary classification
         
@@ -130,7 +137,8 @@ def predict_fraud():
             data.get('flags', 0),
             data.get('account_age_days', 30),
             data.get('total_reports_by_user', 1),
-            data.get('verified_user', 0)
+            data.get('verified_user', 0),
+            data.get('duplicate_score', 0.0) # Include duplicate_score
         ]
         
         # Make prediction
@@ -168,7 +176,12 @@ def predict_risk():
             encode_severity(data.get('severity', 'medium')),
             data.get('injuries_reported', 0),
             data.get('people_involved', 1),
-            data.get('near_sensitive_location', 0)
+            data.get('near_sensitive_location', 0),
+            1 if data.get('has_bleeding', False) else 0,
+            1 if data.get('has_unconscious_people', False) else 0,
+            1 if data.get('has_fire_risk', False) else 0,
+            1 if data.get('has_explosion_risk', False) else 0,
+            1 if data.get('is_road_blocked', False) else 0
         ]
         
         # Make prediction

@@ -18,7 +18,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/volunteers")
-@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:5173"})
+@CrossOrigin(origins = { "http://localhost:3000", "http://localhost:5173" })
 public class VolunteerController {
 
     @Autowired
@@ -33,21 +33,20 @@ public class VolunteerController {
     @PostMapping("/apply")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<?> submitApplication(@Valid @RequestBody VolunteerApplicationRequest request,
-                                             @RequestHeader("Authorization") String authHeader) {
+            @RequestHeader("Authorization") String authHeader) {
         try {
             String token = authHeader.substring(7);
             Long userId = jwtUtil.extractUserId(token);
-            
+
             User user = userService.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                    .orElseThrow(() -> new RuntimeException("User not found"));
 
             VolunteerApplication application = new VolunteerApplication(
-                user,
-                request.getMotivation(),
-                request.getSkills(),
-                request.getAvailability(),
-                request.getVolunteerType()
-            );
+                    user,
+                    request.getMotivation(),
+                    request.getSkills(),
+                    request.getAvailability(),
+                    request.getVolunteerType());
 
             if (request.getExperience() != null) {
                 application.setExperience(request.getExperience());
@@ -96,10 +95,10 @@ public class VolunteerController {
     public ResponseEntity<?> getAllApplications(@RequestParam(required = false) String status) {
         try {
             List<VolunteerApplication> applications;
-            
+
             if (status != null) {
-                VolunteerApplication.ApplicationStatus statusEnum = 
-                    VolunteerApplication.ApplicationStatus.valueOf(status.toUpperCase());
+                VolunteerApplication.ApplicationStatus statusEnum = VolunteerApplication.ApplicationStatus
+                        .valueOf(status.toUpperCase());
                 applications = volunteerService.getApplicationsByStatus(statusEnum);
             } else {
                 applications = volunteerService.getAllApplications();
@@ -169,7 +168,7 @@ public class VolunteerController {
     public ResponseEntity<?> getApplication(@PathVariable Long id) {
         try {
             Optional<VolunteerApplication> application = volunteerService.getApplicationById(id);
-            
+
             if (application.isEmpty()) {
                 Map<String, Object> response = new HashMap<>();
                 response.put("success", false);
@@ -194,18 +193,17 @@ public class VolunteerController {
     @PostMapping("/applications/{id}/review")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> reviewApplication(@PathVariable Long id,
-                                             @RequestBody ReviewApplicationRequest request,
-                                             @RequestHeader("Authorization") String authHeader) {
+            @RequestBody ReviewApplicationRequest request,
+            @RequestHeader("Authorization") String authHeader) {
         try {
             String token = authHeader.substring(7);
             Long reviewerId = jwtUtil.extractUserId(token);
 
-            VolunteerApplication.ApplicationStatus decision = 
-                VolunteerApplication.ApplicationStatus.valueOf(request.getDecision().toUpperCase());
+            VolunteerApplication.ApplicationStatus decision = VolunteerApplication.ApplicationStatus
+                    .valueOf(request.getDecision().toUpperCase());
 
             VolunteerApplication reviewedApplication = volunteerService.reviewApplication(
-                id, decision, request.getReviewNotes(), reviewerId
-            );
+                    id, decision, request.getReviewNotes(), reviewerId);
 
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
@@ -225,7 +223,7 @@ public class VolunteerController {
     @GetMapping("/nearby")
     @PreAuthorize("hasAnyRole('ADMIN', 'VOLUNTEER')")
     public ResponseEntity<?> getNearbyVolunteers(@RequestParam Double latitude,
-                                               @RequestParam Double longitude) {
+            @RequestParam Double longitude) {
         try {
             List<VolunteerApplication> volunteers = volunteerService.findVolunteersInArea(latitude, longitude);
 
@@ -248,9 +246,9 @@ public class VolunteerController {
     @PreAuthorize("hasAnyRole('ADMIN', 'VOLUNTEER')")
     public ResponseEntity<?> getVolunteersByType(@RequestParam String type) {
         try {
-            VolunteerApplication.VolunteerType volunteerType = 
-                VolunteerApplication.VolunteerType.valueOf(type.toUpperCase());
-            
+            VolunteerApplication.VolunteerType volunteerType = VolunteerApplication.VolunteerType
+                    .valueOf(type.toUpperCase());
+
             List<VolunteerApplication> volunteers = volunteerService.findVolunteersByType(volunteerType);
 
             Map<String, Object> response = new HashMap<>();
@@ -291,8 +289,8 @@ public class VolunteerController {
     @PutMapping("/applications/{id}")
     @PreAuthorize("hasAnyRole('USER', 'VOLUNTEER')")
     public ResponseEntity<?> updateApplication(@PathVariable Long id,
-                                             @RequestBody VolunteerApplicationRequest request,
-                                             @RequestHeader("Authorization") String authHeader) {
+            @RequestBody VolunteerApplicationRequest request,
+            @RequestHeader("Authorization") String authHeader) {
         try {
             String token = authHeader.substring(7);
             Long userId = jwtUtil.extractUserId(token);
@@ -331,7 +329,7 @@ public class VolunteerController {
     @DeleteMapping("/applications/{id}")
     @PreAuthorize("hasAnyRole('USER', 'VOLUNTEER')")
     public ResponseEntity<?> deleteApplication(@PathVariable Long id,
-                                             @RequestHeader("Authorization") String authHeader) {
+            @RequestHeader("Authorization") String authHeader) {
         try {
             String token = authHeader.substring(7);
             Long userId = jwtUtil.extractUserId(token);
@@ -412,39 +410,121 @@ public class VolunteerController {
         private String emergencyContact;
 
         // Getters and setters
-        public String getMotivation() { return motivation; }
-        public void setMotivation(String motivation) { this.motivation = motivation; }
-        public String getSkills() { return skills; }
-        public void setSkills(String skills) { this.skills = skills; }
-        public String getAvailability() { return availability; }
-        public void setAvailability(String availability) { this.availability = availability; }
-        public String getExperience() { return experience; }
-        public void setExperience(String experience) { this.experience = experience; }
-        public String getCertifications() { return certifications; }
-        public void setCertifications(String certifications) { this.certifications = certifications; }
-        public String getEmergencyTraining() { return emergencyTraining; }
-        public void setEmergencyTraining(String emergencyTraining) { this.emergencyTraining = emergencyTraining; }
-        public VolunteerApplication.VolunteerType getVolunteerType() { return volunteerType; }
-        public void setVolunteerType(VolunteerApplication.VolunteerType volunteerType) { this.volunteerType = volunteerType; }
-        public Double getPreferredLatitude() { return preferredLatitude; }
-        public void setPreferredLatitude(Double preferredLatitude) { this.preferredLatitude = preferredLatitude; }
-        public Double getPreferredLongitude() { return preferredLongitude; }
-        public void setPreferredLongitude(Double preferredLongitude) { this.preferredLongitude = preferredLongitude; }
-        public Double getMaxDistanceKm() { return maxDistanceKm; }
-        public void setMaxDistanceKm(Double maxDistanceKm) { this.maxDistanceKm = maxDistanceKm; }
-        public String getAlternatePhone() { return alternatePhone; }
-        public void setAlternatePhone(String alternatePhone) { this.alternatePhone = alternatePhone; }
-        public String getEmergencyContact() { return emergencyContact; }
-        public void setEmergencyContact(String emergencyContact) { this.emergencyContact = emergencyContact; }
+        public String getMotivation() {
+            return motivation;
+        }
+
+        public void setMotivation(String motivation) {
+            this.motivation = motivation;
+        }
+
+        public String getSkills() {
+            return skills;
+        }
+
+        public void setSkills(String skills) {
+            this.skills = skills;
+        }
+
+        public String getAvailability() {
+            return availability;
+        }
+
+        public void setAvailability(String availability) {
+            this.availability = availability;
+        }
+
+        public String getExperience() {
+            return experience;
+        }
+
+        public void setExperience(String experience) {
+            this.experience = experience;
+        }
+
+        public String getCertifications() {
+            return certifications;
+        }
+
+        public void setCertifications(String certifications) {
+            this.certifications = certifications;
+        }
+
+        public String getEmergencyTraining() {
+            return emergencyTraining;
+        }
+
+        public void setEmergencyTraining(String emergencyTraining) {
+            this.emergencyTraining = emergencyTraining;
+        }
+
+        public VolunteerApplication.VolunteerType getVolunteerType() {
+            return volunteerType;
+        }
+
+        public void setVolunteerType(VolunteerApplication.VolunteerType volunteerType) {
+            this.volunteerType = volunteerType;
+        }
+
+        public Double getPreferredLatitude() {
+            return preferredLatitude;
+        }
+
+        public void setPreferredLatitude(Double preferredLatitude) {
+            this.preferredLatitude = preferredLatitude;
+        }
+
+        public Double getPreferredLongitude() {
+            return preferredLongitude;
+        }
+
+        public void setPreferredLongitude(Double preferredLongitude) {
+            this.preferredLongitude = preferredLongitude;
+        }
+
+        public Double getMaxDistanceKm() {
+            return maxDistanceKm;
+        }
+
+        public void setMaxDistanceKm(Double maxDistanceKm) {
+            this.maxDistanceKm = maxDistanceKm;
+        }
+
+        public String getAlternatePhone() {
+            return alternatePhone;
+        }
+
+        public void setAlternatePhone(String alternatePhone) {
+            this.alternatePhone = alternatePhone;
+        }
+
+        public String getEmergencyContact() {
+            return emergencyContact;
+        }
+
+        public void setEmergencyContact(String emergencyContact) {
+            this.emergencyContact = emergencyContact;
+        }
     }
 
     public static class ReviewApplicationRequest {
         private String decision;
         private String reviewNotes;
 
-        public String getDecision() { return decision; }
-        public void setDecision(String decision) { this.decision = decision; }
-        public String getReviewNotes() { return reviewNotes; }
-        public void setReviewNotes(String reviewNotes) { this.reviewNotes = reviewNotes; }
+        public String getDecision() {
+            return decision;
+        }
+
+        public void setDecision(String decision) {
+            this.decision = decision;
+        }
+
+        public String getReviewNotes() {
+            return reviewNotes;
+        }
+
+        public void setReviewNotes(String reviewNotes) {
+            this.reviewNotes = reviewNotes;
+        }
     }
 }

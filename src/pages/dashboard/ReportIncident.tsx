@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
-import { MapPin, Loader2, UploadCloud, CheckCircle2, AlertCircle } from 'lucide-react';
+import { MapPin, Loader2, CheckCircle2, AlertCircle, Sparkles, Siren } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { IncidentService } from '@/services/incident.service';
 import { useNavigate } from 'react-router-dom';
@@ -14,6 +14,18 @@ export default function ReportIncident() {
     const [isLoadingLocation, setIsLoadingLocation] = useState(false);
     const [submitSuccess, setSubmitSuccess] = useState(false);
     const [error, setError] = useState('');
+
+    // AI Analysis State
+    const [aiLoading, setAiLoading] = useState(false);
+    const [aiResult, setAiResult] = useState<any>(null);
+
+    // Advanced Details State
+    const [advancedDetails, setAdvancedDetails] = useState({
+        hasBleeding: false,
+        hasUnconsciousPeople: false,
+        hasFireRisk: false,
+        isRoadBlocked: false
+    });
 
     const [formData, setFormData] = useState({
         title: '',
@@ -95,6 +107,59 @@ export default function ReportIncident() {
             ...prev,
             [id]: parseInt(value) || 0
         }));
+    };
+
+    const handleCheckboxChange = (id: string, checked: boolean) => {
+        setAdvancedDetails(prev => ({
+            ...prev,
+            [id]: checked
+        }));
+    };
+
+    const analyzeIncident = async () => {
+        if (!formData.description) return;
+
+        setAiLoading(true);
+        setAiResult(null);
+
+        try {
+            const analysisData = {
+                ...formData,
+                hasInjuries: formData.injuriesReported > 0,
+                ...advancedDetails,
+                vehiclesInvolved: formData.type === 'ROAD_ACCIDENT' ? 1 : 0 // Simple inference
+            };
+
+            const [severityRes, emergencyRes] = await Promise.all([
+                IncidentService.suggestSeverity(analysisData),
+                IncidentService.getEmergencyRecommendations(analysisData)
+            ]);
+
+            setAiResult({
+                suggestedSeverity: severityRes.suggestedSeverity,
+                severityExplanation: severityRes.explanation,
+                recommendations: {
+                    ambulance: emergencyRes.recommendAmbulance,
+                    police: emergencyRes.recommendPolice,
+                    fire: emergencyRes.recommendFire,
+                    explanation: emergencyRes.explanation
+                }
+            });
+
+        } catch (err) {
+            console.error("AI Analysis failed", err);
+        } finally {
+            setAiLoading(false);
+        }
+    };
+
+    const applyAiSuggestions = () => {
+        if (aiResult?.suggestedSeverity) {
+            setFormData(prev => ({
+                ...prev,
+                severity: aiResult.suggestedSeverity
+            }));
+        }
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -240,14 +305,61 @@ export default function ReportIncident() {
 
                         <div className="space-y-2">
                             <Label htmlFor="description">Description</Label>
-                            <textarea
-                                id="description"
-                                className="flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                                placeholder="Describe what is happening including severity and immediate dangers..."
-                                value={formData.description}
-                                onChange={handleChange}
-                                required
-                            />
+                            <div className="relative">
+                                <textarea
+                                    id="description"
+                                    className="flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring pb-12"
+                                    placeholder="Describe what is happening including severity and immediate dangers..."
+                                    value={formData.description}
+                                    onChange={handleChange}
+                                    required
+                                />
+                                <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="secondary"
+                                    className="absolute right-3 bottom-3"
+                                    onClick={analyzeIncident}
+                                    disabled={aiLoading || !formData.description}
+                                >
+                                    {aiLoading ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <Sparkles className="w-3 h-3 mr-1 text-purple-500" />}
+                                    Analyze with AI
+                                </Button>
+                            </div>
+
+                            {/* AI Result Display */}
+                            {aiResult && (
+                                <div className="mt-2 p-3 bg-purple-50 dark:bg-purple-900/10 border border-purple-100 dark:border-purple-800 rounded-md text-sm animate-in fade-in slide-in-from-top-2">
+                                    <div className="flex justify-between items-start">
+                                        <div>
+                                            <p className="font-semibold text-purple-900 dark:text-purple-300 flex items-center gap-2">
+                                                <Sparkles className="w-4 h-4" /> AI Analysis Result
+                                            </p>
+                                            <div className="mt-2 space-y-1 text-purple-800 dark:text-purple-400">
+                                                <p>Suggested Severity: <span className="font-bold">{aiResult.suggestedSeverity}</span></p>
+                                                <p className="text-xs opacity-90">{aiResult.severityExplanation}</p>
+
+                                                <div className="mt-2">
+                                                    <p className="font-medium">Recommended Services:</p>
+                                                    <div className="flex gap-2 mt-1">
+                                                        {aiResult.recommendations.ambulance && <span className="px-2 py-0.5 bg-red-100 text-red-800 rounded text-xs flex items-center gap-1"><Siren className="w-3 h-3" /> Ambulance</span>}
+                                                        {aiResult.recommendations.police && <span className="px-2 py-0.5 bg-blue-100 text-blue-800 rounded text-xs flex items-center gap-1"><Siren className="w-3 h-3" /> Police</span>}
+                                                        {aiResult.recommendations.fire && <span className="px-2 py-0.5 bg-orange-100 text-orange-800 rounded text-xs flex items-center gap-1"><Siren className="w-3 h-3" /> Fire</span>}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <Button
+                                            size="sm"
+                                            variant="outline"
+                                            onClick={applyAiSuggestions}
+                                            className="text-xs h-7 border-purple-200 hover:bg-purple-100 hover:text-purple-900"
+                                        >
+                                            Apply Suggestions
+                                        </Button>
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">
@@ -271,6 +383,42 @@ export default function ReportIncident() {
                                     onChange={handleNumberChange}
                                 />
                             </div>
+                        </div>
+
+                        {/* Advanced Checkboxes */}
+                        <div className="grid grid-cols-2 gap-3 p-3 bg-slate-50 dark:bg-slate-900/50 rounded-lg">
+                            <Label className="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox"
+                                    className="rounded border-gray-300"
+                                    checked={advancedDetails.hasBleeding}
+                                    onChange={(e) => handleCheckboxChange('hasBleeding', e.target.checked)}
+                                />
+                                <span className="text-sm">Severe Bleeding?</span>
+                            </Label>
+                            <Label className="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox"
+                                    className="rounded border-gray-300"
+                                    checked={advancedDetails.hasUnconsciousPeople}
+                                    onChange={(e) => handleCheckboxChange('hasUnconsciousPeople', e.target.checked)}
+                                />
+                                <span className="text-sm">Unconscious People?</span>
+                            </Label>
+                            <Label className="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox"
+                                    className="rounded border-gray-300"
+                                    checked={advancedDetails.hasFireRisk}
+                                    onChange={(e) => handleCheckboxChange('hasFireRisk', e.target.checked)}
+                                />
+                                <span className="text-sm">Fire/Explosion Risk?</span>
+                            </Label>
+                            <Label className="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox"
+                                    className="rounded border-gray-300"
+                                    checked={advancedDetails.isRoadBlocked}
+                                    onChange={(e) => handleCheckboxChange('isRoadBlocked', e.target.checked)}
+                                />
+                                <span className="text-sm">Road Blocked?</span>
+                            </Label>
                         </div>
 
                         <Button

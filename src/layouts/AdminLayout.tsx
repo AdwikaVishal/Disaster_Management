@@ -27,6 +27,8 @@ const adminLinks = [
 
 import { useAuth } from '@/context/AuthContext';
 
+import { SOSAlertPopup } from '@/components/admin/SOSAlertPopup';
+
 export const AdminLayout = () => {
     const { logout } = useAuth();
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -34,6 +36,7 @@ export const AdminLayout = () => {
 
     return (
         <div className="min-h-screen bg-background flex">
+            <SOSAlertPopup />
             {/* Sidebar - Desktop */}
             <aside className="hidden lg:flex w-64 flex-col border-r border-border bg-slate-900 text-slate-50 fixed inset-y-0 z-40">
                 <div className="h-16 flex items-center px-6 border-b border-slate-800">
