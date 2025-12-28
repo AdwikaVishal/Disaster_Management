@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/Card';
-import { BadgeAlert, Database, Hash, Lock, Search, Download, Filter, Wifi, WifiOff, RefreshCw } from 'lucide-react';
-import { Input } from '@/components/ui/Input';
-import { Button } from '@/components/ui/Button';
+import { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Database, Hash, Lock, Search, Download, Wifi, WifiOff, RefreshCw } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 
 interface AuditLog {
   id: number;
@@ -15,12 +15,12 @@ interface AuditLog {
   ipAddress: string;
   userAgent: string;
   status: string;
-  errorMessage: string;
+  errorMessage: string | null;
   blockchainTxHash: string;
   blockchainStatus: string;
   blockchainNetwork: string;
-  blockchainGasUsed: number;
-  blockchainBlockNumber: number;
+  blockchainGasUsed: number | null;
+  blockchainBlockNumber: number | null;
   createdAt: string;
   metadata: string;
 }
@@ -37,13 +37,13 @@ interface BlockchainStatus {
 
 // Mock Blockchain Audit Data
 const MOCK_LOGS: AuditLog[] = [
-  { 
-    id: 1, 
-    actionType: 'INCIDENT_VERIFIED', 
-    userId: 'admin-01', 
+  {
+    id: 1,
+    actionType: 'INCIDENT_VERIFIED',
+    userId: 'admin-01',
     userRole: 'ADMIN',
-    targetType: 'INCIDENT', 
-    targetId: 'INC-2938', 
+    targetType: 'INCIDENT',
+    targetId: 'INC-2938',
     targetDescription: 'Fire incident verified in downtown area',
     ipAddress: '192.168.1.100',
     userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
@@ -57,13 +57,13 @@ const MOCK_LOGS: AuditLog[] = [
     createdAt: '2023-12-28T14:30:22Z',
     metadata: '{"verificationType": "AUTO_VERIFIED", "confidence": 0.95}'
   },
-  { 
-    id: 2, 
-    actionType: 'VOLUNTEER_APPROVED', 
-    userId: 'admin-01', 
+  {
+    id: 2,
+    actionType: 'VOLUNTEER_APPROVED',
+    userId: 'admin-01',
     userRole: 'ADMIN',
-    targetType: 'VOLUNTEER', 
-    targetId: 'VOL-8821', 
+    targetType: 'VOLUNTEER',
+    targetId: 'VOL-8821',
     targetDescription: 'Volunteer John Doe approved for rescue operations',
     ipAddress: '192.168.1.100',
     userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
@@ -77,13 +77,13 @@ const MOCK_LOGS: AuditLog[] = [
     createdAt: '2023-12-28T14:15:10Z',
     metadata: '{"skills": ["medical", "rescue"], "experience": "2 years"}'
   },
-  { 
-    id: 3, 
-    actionType: 'ALERT_BROADCAST', 
-    userId: 'System', 
+  {
+    id: 3,
+    actionType: 'ALERT_BROADCAST',
+    userId: 'System',
     userRole: 'SYSTEM',
-    targetType: 'REGION', 
-    targetId: 'REGION-4', 
+    targetType: 'REGION',
+    targetId: 'REGION-4',
     targetDescription: 'Emergency alert broadcast to Region 4 residents',
     ipAddress: '127.0.0.1',
     userAgent: 'System/Internal',
@@ -97,13 +97,13 @@ const MOCK_LOGS: AuditLog[] = [
     createdAt: '2023-12-28T13:45:00Z',
     metadata: '{"alertType": "EVACUATION", "channels": ["SMS", "EMAIL", "APP"]}'
   },
-  { 
-    id: 4, 
-    actionType: 'INCIDENT_REPORTED', 
-    userId: 'user-4402', 
+  {
+    id: 4,
+    actionType: 'INCIDENT_REPORTED',
+    userId: 'user-4402',
     userRole: 'USER',
-    targetType: 'INCIDENT', 
-    targetId: 'INC-2939', 
+    targetType: 'INCIDENT',
+    targetId: 'INC-2939',
     targetDescription: 'Medical emergency reported near Central Hospital',
     ipAddress: '203.0.113.45',
     userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0)',
@@ -117,13 +117,13 @@ const MOCK_LOGS: AuditLog[] = [
     createdAt: '2023-12-28T13:30:55Z',
     metadata: '{"location": "GPS", "severity": "HIGH"}'
   },
-  { 
-    id: 5, 
-    actionType: 'RESOURCE_ASSIGNED', 
-    userId: 'admin-01', 
+  {
+    id: 5,
+    actionType: 'RESOURCE_ASSIGNED',
+    userId: 'admin-01',
     userRole: 'ADMIN',
-    targetType: 'INCIDENT', 
-    targetId: 'INC-2938', 
+    targetType: 'INCIDENT',
+    targetId: 'INC-2938',
     targetDescription: 'Fire Brigade Unit 3 assigned to incident',
     ipAddress: '192.168.1.100',
     userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
@@ -137,13 +137,13 @@ const MOCK_LOGS: AuditLog[] = [
     createdAt: '2023-12-28T13:00:12Z',
     metadata: '{"unitType": "FIRE_BRIGADE", "eta": 8, "distance": 2.3}'
   },
-  { 
-    id: 6, 
-    actionType: 'USER_LOGIN', 
-    userId: 'admin-02', 
+  {
+    id: 6,
+    actionType: 'USER_LOGIN',
+    userId: 'admin-02',
     userRole: 'ADMIN',
-    targetType: 'AUTH', 
-    targetId: 'admin-02', 
+    targetType: 'AUTH',
+    targetId: 'admin-02',
     targetDescription: 'Admin login successful',
     ipAddress: '192.168.1.101',
     userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)',
@@ -157,13 +157,13 @@ const MOCK_LOGS: AuditLog[] = [
     createdAt: '2023-12-28T12:45:30Z',
     metadata: '{"loginMethod": "OTP", "sessionId": "sess_abc123"}'
   },
-  { 
-    id: 7, 
-    actionType: 'INCIDENT_RESOLVED', 
-    userId: 'admin-01', 
+  {
+    id: 7,
+    actionType: 'INCIDENT_RESOLVED',
+    userId: 'admin-01',
     userRole: 'ADMIN',
-    targetType: 'INCIDENT', 
-    targetId: 'INC-2937', 
+    targetType: 'INCIDENT',
+    targetId: 'INC-2937',
     targetDescription: 'Traffic accident cleared, road reopened',
     ipAddress: '192.168.1.100',
     userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
@@ -229,7 +229,7 @@ export default function AuditLogs() {
       return;
     }
 
-    const filtered = logs.filter(log => 
+    const filtered = logs.filter(log =>
       log.actionType.toLowerCase().includes(searchTerm.toLowerCase()) ||
       log.userId.toLowerCase().includes(searchTerm.toLowerCase()) ||
       log.targetId.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -242,9 +242,9 @@ export default function AuditLogs() {
     setExporting(true);
     // Simulate CSV export
     setTimeout(() => {
-      const csvContent = "ID,Action Type,User ID,Target,Status,Blockchain TX\n" + 
+      const csvContent = "ID,Action Type,User ID,Target,Status,Blockchain TX\n" +
         filteredLogs.map(log => `${log.id},${log.actionType},${log.userId},${log.targetId},${log.status},${log.blockchainTxHash}`).join("\n");
-      
+
       const blob = new Blob([csvContent], { type: 'text/csv' });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -293,11 +293,10 @@ export default function AuditLogs() {
         <div>
           <div className="flex items-center gap-2 mb-1">
             <h1 className="text-3xl font-bold tracking-tight">System Audit Log</h1>
-            <div className={`px-2 py-0.5 rounded text-xs font-mono border ${
-              blockchainStatus?.status === 'healthy' 
+            <div className={`px-2 py-0.5 rounded text-xs font-mono border ${blockchainStatus?.status === 'healthy'
                 ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 border-blue-200'
                 : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 border-red-200'
-            }`}>
+              }`}>
               {blockchainStatus?.status === 'healthy' ? 'BLOCKCHAIN ENABLED' : 'BLOCKCHAIN DISCONNECTED'}
             </div>
           </div>
@@ -306,15 +305,15 @@ export default function AuditLogs() {
         <div className="flex gap-2 w-full md:w-auto">
           <div className="relative flex-1 md:w-64">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input 
-              className="pl-9" 
-              placeholder="Search logs..." 
+            <Input
+              className="pl-9"
+              placeholder="Search logs..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onClick={handleExportCSV}
             disabled={exporting}
           >
@@ -381,11 +380,10 @@ export default function AuditLogs() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
             <div>
               <span className="font-medium">Status:</span>
-              <span className={`ml-2 px-2 py-1 rounded text-xs ${
-                blockchainStatus?.status === 'healthy' 
+              <span className={`ml-2 px-2 py-1 rounded text-xs ${blockchainStatus?.status === 'healthy'
                   ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
                   : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
-              }`}>
+                }`}>
                 {blockchainStatus?.status || 'Unknown'}
               </span>
             </div>

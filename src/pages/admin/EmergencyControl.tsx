@@ -1,13 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
-import { Siren, Radio, Megaphone, ShieldAlert, Power, Loader2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Siren, Megaphone, ShieldAlert, Power, Loader2 } from 'lucide-react';
 
 export default function EmergencyControl() {
     const [activeAlert, setActiveAlert] = useState<string | null>(null);
     const [message, setMessage] = useState('');
     const [isSOSContext, setIsSOSContext] = useState(false);
-    
+
     // System Configuration State
     const [systemConfig, setSystemConfig] = useState<any>({});
     const [loading, setLoading] = useState(true);
@@ -24,7 +24,7 @@ export default function EmergencyControl() {
                     'Content-Type': 'application/json'
                 }
             });
-            
+
             if (response.ok) {
                 const data = await response.json();
                 setSystemConfig(data.systemConfig);
@@ -44,7 +44,7 @@ export default function EmergencyControl() {
         try {
             setUpdating(configKey);
             setError(null);
-            
+
             const response = await fetch(`/api/admin/system-config/${configKey}`, {
                 method: 'PUT',
                 headers: {
@@ -53,11 +53,11 @@ export default function EmergencyControl() {
                 },
                 body: JSON.stringify({ enabled })
             });
-            
+
             if (response.ok) {
                 const data = await response.json();
                 // Update local state
-                setSystemConfig(prev => ({
+                setSystemConfig((prev: any) => ({
                     ...prev,
                     [configKey]: {
                         ...prev[configKey],
@@ -96,7 +96,7 @@ export default function EmergencyControl() {
                 fetchSystemConfig();
             }
         };
-        
+
         initializeAndFetch();
     }, []);
 
@@ -231,9 +231,9 @@ export default function EmergencyControl() {
                             <div className="text-red-600 text-center py-4">
                                 <p className="font-semibold">Error</p>
                                 <p className="text-sm">{error}</p>
-                                <Button 
-                                    onClick={fetchSystemConfig} 
-                                    variant="outline" 
+                                <Button
+                                    onClick={fetchSystemConfig}
+                                    variant="outline"
                                     className="mt-2"
                                 >
                                     Retry
@@ -249,20 +249,18 @@ export default function EmergencyControl() {
                                     <button
                                         onClick={() => updateSystemConfig('AUTO_DISPATCH_VOLUNTEERS', !systemConfig.autoDispatchVolunteers?.enabled)}
                                         disabled={updating === 'AUTO_DISPATCH_VOLUNTEERS'}
-                                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 ${
-                                            systemConfig.autoDispatchVolunteers?.enabled 
-                                                ? 'bg-green-500' 
-                                                : 'bg-slate-200'
-                                        } ${updating === 'AUTO_DISPATCH_VOLUNTEERS' ? 'opacity-50' : ''}`}
+                                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 ${systemConfig.autoDispatchVolunteers?.enabled
+                                            ? 'bg-green-500'
+                                            : 'bg-slate-200'
+                                            } ${updating === 'AUTO_DISPATCH_VOLUNTEERS' ? 'opacity-50' : ''}`}
                                     >
                                         {updating === 'AUTO_DISPATCH_VOLUNTEERS' ? (
                                             <Loader2 className="w-4 h-4 animate-spin text-white mx-auto" />
                                         ) : (
-                                            <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
-                                                systemConfig.autoDispatchVolunteers?.enabled 
-                                                    ? 'translate-x-6' 
-                                                    : 'translate-x-1'
-                                            }`} />
+                                            <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${systemConfig.autoDispatchVolunteers?.enabled
+                                                ? 'translate-x-6'
+                                                : 'translate-x-1'
+                                                }`} />
                                         )}
                                     </button>
                                 </div>
@@ -275,29 +273,26 @@ export default function EmergencyControl() {
                                     <button
                                         onClick={() => updateSystemConfig('AI_RISK_SCORING', !systemConfig.aiRiskScoring?.enabled)}
                                         disabled={updating === 'AI_RISK_SCORING'}
-                                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 ${
-                                            systemConfig.aiRiskScoring?.enabled 
-                                                ? 'bg-green-500' 
-                                                : 'bg-slate-200'
-                                        } ${updating === 'AI_RISK_SCORING' ? 'opacity-50' : ''}`}
+                                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 ${systemConfig.aiRiskScoring?.enabled
+                                            ? 'bg-green-500'
+                                            : 'bg-slate-200'
+                                            } ${updating === 'AI_RISK_SCORING' ? 'opacity-50' : ''}`}
                                     >
                                         {updating === 'AI_RISK_SCORING' ? (
                                             <Loader2 className="w-4 h-4 animate-spin text-white mx-auto" />
                                         ) : (
-                                            <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
-                                                systemConfig.aiRiskScoring?.enabled 
-                                                    ? 'translate-x-6' 
-                                                    : 'translate-x-1'
-                                            }`} />
+                                            <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${systemConfig.aiRiskScoring?.enabled
+                                                ? 'translate-x-6'
+                                                : 'translate-x-1'
+                                                }`} />
                                         )}
                                     </button>
                                 </div>
 
-                                <div className={`flex items-center justify-between p-4 border rounded-lg ${
-                                    systemConfig.lockdownMode?.enabled 
-                                        ? 'bg-red-50 border-red-200' 
-                                        : 'bg-slate-50'
-                                }`}>
+                                <div className={`flex items-center justify-between p-4 border rounded-lg ${systemConfig.lockdownMode?.enabled
+                                    ? 'bg-red-50 border-red-200'
+                                    : 'bg-slate-50'
+                                    }`}>
                                     <div>
                                         <p className="font-bold">Lockdown Mode</p>
                                         <p className="text-xs text-muted-foreground">Restrict user movements suggestions</p>
@@ -308,20 +303,18 @@ export default function EmergencyControl() {
                                     <button
                                         onClick={() => updateSystemConfig('LOCKDOWN_MODE', !systemConfig.lockdownMode?.enabled)}
                                         disabled={updating === 'LOCKDOWN_MODE'}
-                                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 ${
-                                            systemConfig.lockdownMode?.enabled 
-                                                ? 'bg-red-500' 
-                                                : 'bg-slate-200'
-                                        } ${updating === 'LOCKDOWN_MODE' ? 'opacity-50' : ''}`}
+                                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 ${systemConfig.lockdownMode?.enabled
+                                            ? 'bg-red-500'
+                                            : 'bg-slate-200'
+                                            } ${updating === 'LOCKDOWN_MODE' ? 'opacity-50' : ''}`}
                                     >
                                         {updating === 'LOCKDOWN_MODE' ? (
                                             <Loader2 className="w-4 h-4 animate-spin text-white mx-auto" />
                                         ) : (
-                                            <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
-                                                systemConfig.lockdownMode?.enabled 
-                                                    ? 'translate-x-6' 
-                                                    : 'translate-x-1'
-                                            }`} />
+                                            <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${systemConfig.lockdownMode?.enabled
+                                                ? 'translate-x-6'
+                                                : 'translate-x-1'
+                                                }`} />
                                         )}
                                     </button>
                                 </div>

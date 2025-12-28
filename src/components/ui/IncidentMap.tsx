@@ -1,14 +1,14 @@
 import { useRef, useEffect, useState, useCallback } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/Card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/Select";
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { geoPath, geoMercator } from 'd3-geo';
 import { select } from 'd3-selection';
 import { scaleThreshold } from 'd3-scale';
 import { interpolateReds } from 'd3-scale-chromatic';
 import { json } from 'd3-fetch';
-import { ZoomIn, RotateCcw, Map as MapIcon, Loader2, AlertTriangle, ShieldCheck } from 'lucide-react';
+import { RotateCcw, Map as MapIcon, Loader2, AlertTriangle, ShieldCheck } from 'lucide-react';
 
 // Use same color scale for incidents
 const COLOR_SCALE = interpolateReds;
@@ -28,7 +28,7 @@ interface Incident {
 // Mock Data
 const MOCK_INCIDENT_DATA: Incident[] = [
     { id: 1, type: 'Flood', state: 'Kerala', severity: 'High', count: 12 },
-    { id: 2, type: 'Fire', state: 'Maharashtra', severity: 'Critical', count: 8 },
+    { id: 2, type: 'Fire', state: 'Maharashtra', severity: 'High', count: 8 },
     { id: 3, type: 'Earthquake', state: 'Gujarat', severity: 'High', count: 5 },
     { id: 4, type: 'Medical', state: 'Delhi', severity: 'Medium', count: 25 },
     { id: 5, type: 'Road Accident', state: 'Uttar Pradesh', severity: 'High', count: 15 },
@@ -133,7 +133,10 @@ export function IncidentMap({ className, isAdmin = false }: { className?: string
                 const centerX = (x0 + x1) / 2;
                 const centerY = (y0 + y1) / 2;
                 // Adjust for desired center
-                projection.center(projection.invert([centerX, centerY]) || [78.9, 22.5]);
+                const newCenter = projection.invert ? projection.invert([centerX, centerY]) : null;
+                if (newCenter) {
+                    projection.center(newCenter);
+                }
                 projection.translate([width / 2, height / 2]);
             }
         }
@@ -197,7 +200,7 @@ export function IncidentMap({ className, isAdmin = false }: { className?: string
                     .on('mousemove', (event: any) => {
                         setMousePos({ x: event.pageX, y: event.pageY });
                     })
-                    .on('mouseleave', function (event: any, d: any) {
+                    .on('mouseleave', function () {
                         select(this)
                             .attr('stroke', '#cbd5e1')
                             .attr('stroke-width', zoomedState ? 2 : 1);

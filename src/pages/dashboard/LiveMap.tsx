@@ -1,4 +1,4 @@
-import React from 'react';
+
 import { IncidentMap } from '@/components/ui/IncidentMap';
 
 export default function LiveMap() {

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Card, CardContent } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
-import { AlertTriangle, MapPin, Check, X, Eye, Loader2, ShieldAlert } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { AlertTriangle, MapPin, Check, X, Loader2, ShieldAlert } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { IncidentService, Incident } from '@/services/incident.service';
 import { formatDistanceToNow } from 'date-fns';

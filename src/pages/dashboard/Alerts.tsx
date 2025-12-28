@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
+import { useState, useEffect } from 'react';
 import { AlertTriangle, BellRing, Info, Loader2 } from 'lucide-react';
 import { IncidentService, Incident } from '@/services/incident.service';
 import { formatDistanceToNow } from 'date-fns';
@@ -66,7 +65,7 @@ export default function Alerts() {
                     alerts.map((alert) => {
                         const alertStyle = getAlertType(alert.severity);
                         const AlertIcon = alertStyle.icon;
-                        
+
                         return (
                             <div key={alert.id} className={`flex gap-4 p-4 rounded-lg border ${alertStyle.bgColor} ${alertStyle.borderColor} ${alertStyle.borderLeft}`}>
                                 <div className={`mt-1 ${alertStyle.textColor}`}>

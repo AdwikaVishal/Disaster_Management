@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { AlertTriangle, MapPin, Droplets, Wind, ThermometerSun, Loader2, ShieldAlert, Check } from 'lucide-react';
 import { IncidentService, Incident } from '@/services/incident.service';
 import { formatDistanceToNow } from 'date-fns';

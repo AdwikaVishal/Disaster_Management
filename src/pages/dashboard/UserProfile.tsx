@@ -1,9 +1,8 @@
-import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/Label';
-import { User, Phone, Shield, FileText } from 'lucide-react';
+import { User, Phone, Shield } from 'lucide-react';
 
 export default function UserProfile() {
     return (

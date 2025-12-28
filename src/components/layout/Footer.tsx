@@ -1,5 +1,4 @@
-import React from 'react';
-import { ShieldAlert, Heart, Github, Twitter, Linkedin } from 'lucide-react';
+import { ShieldAlert, Github, Twitter, Linkedin } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export const Footer = () => {

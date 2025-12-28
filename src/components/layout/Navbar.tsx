@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Menu, X, ShieldAlert, BarChart3, Users } from 'lucide-react';
+import { Menu, X, ShieldAlert } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/Button'; // Will create this next
 
 export const Navbar = () => {
     const [isScrolled, setIsScrolled] = useState(false);

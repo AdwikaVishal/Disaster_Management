@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
+import { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/Label';
 import { MapPin, Loader2, CheckCircle2, AlertCircle, Sparkles, Siren } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -16,8 +16,8 @@ export default function ReportIncident() {
     const [error, setError] = useState('');
 
     // AI Analysis State
-    const [aiLoading, setAiLoading] = useState(false);
-    const [aiResult, setAiResult] = useState<any>(null);
+    // const [aiLoading, setAiLoading] = useState(false);
+    const [aiResult] = useState<any>(null);
 
     // Advanced Details State
     const [advancedDetails, setAdvancedDetails] = useState({
@@ -116,6 +116,7 @@ export default function ReportIncident() {
         }));
     };
 
+    /*
     const analyzeIncident = async () => {
         if (!formData.description) return;
 
@@ -152,6 +153,7 @@ export default function ReportIncident() {
             setAiLoading(false);
         }
     };
+    */
 
     const applyAiSuggestions = () => {
         if (aiResult?.suggestedSeverity) {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import {
     LayoutDashboard,
@@ -7,16 +7,13 @@ import {
     Users,
     FileCheck,
     FileText,
-    Menu,
-    X,
     LogOut,
     Siren,
     Wifi,
     WifiOff
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/Button';
-import AuditService from '@/services/audit.service';
+import { Button } from '@/components/ui/button';
 
 // Updated Admin Links - Removed Analytics, Added User Management
 const adminLinks = [
@@ -34,7 +31,7 @@ import { SOSAlertPopup } from '@/components/admin/SOSAlertPopup';
 
 export const AdminLayout = () => {
     const { logout } = useAuth();
-    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    // const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [blockchainStatus, setBlockchainStatus] = useState<{
         status: string;
         latestBlock?: string;
@@ -50,7 +47,7 @@ export const AdminLayout = () => {
             networkId: '1'
         };
         setBlockchainStatus(mockStatus);
-        
+
         // Simulate real-time updates every 60 seconds
         const interval = setInterval(() => {
             setBlockchainStatus(prev => ({
@@ -114,11 +111,10 @@ export const AdminLayout = () => {
                     <div className="flex items-center gap-4">
                         {/* Blockchain Status Indicator */}
                         {blockchainStatus && (
-                            <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium border ${
-                                blockchainStatus.status === 'healthy' 
+                            <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium border ${blockchainStatus.status === 'healthy'
                                     ? 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400'
                                     : 'bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400'
-                            }`}>
+                                }`}>
                                 {blockchainStatus.status === 'healthy' ? (
                                     <Wifi className="w-3 h-3" />
                                 ) : (
@@ -130,7 +126,7 @@ export const AdminLayout = () => {
                                 )}
                             </div>
                         )}
-                        
+
                         <div className="px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-bold border border-red-200 animate-pulse">
                             LIVE MONITORING ACTIVE
                         </div>

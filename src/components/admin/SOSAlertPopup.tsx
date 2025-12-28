@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import { Button } from '@/components/ui/Button';
-import { Siren, MapPin, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Siren, MapPin } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface SOSAlert {

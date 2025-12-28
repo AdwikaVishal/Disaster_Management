@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/Label';
 import { Link, useNavigate } from 'react-router-dom';
 import { UserPlus, ArrowRight } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
-import { cn } from '@/lib/utils';
+
 
 export const SignupPage = () => {
     const navigate = useNavigate();
