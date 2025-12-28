@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'}/api/audit`;
+const API_BASE_URL = `${import.meta.env.VITE_API_URL || 'https://sense-safe-backend.onrender.com/api'}/audit`;
 
 export interface AuditLog {
   id: number;

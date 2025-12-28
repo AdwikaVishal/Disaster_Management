@@ -39,7 +39,7 @@ export interface CreateIncidentData {
     tags?: string[];
 }
 
-const API_URL = `${import.meta.env.VITE_API_URL}/incidents`;
+const API_URL = `${import.meta.env.VITE_API_URL || 'https://sense-safe-backend.onrender.com/api'}/incidents`;
 
 const handleResponse = async (response: Response): Promise<any> => {
     const contentType = response.headers.get("content-type");

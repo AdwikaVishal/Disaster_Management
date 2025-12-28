@@ -33,7 +33,7 @@ export interface CreateVolunteerApplicationData {
     maxDistanceKm?: number;
 }
 
-const API_URL = `${import.meta.env.VITE_API_URL}/volunteers`;
+const API_URL = `${import.meta.env.VITE_API_URL || 'https://sense-safe-backend.onrender.com/api'}/volunteers`;
 
 const handleResponse = async (response: Response): Promise<any> => {
     const contentType = response.headers.get("content-type");

@@ -31,7 +31,7 @@ export interface SignupData {
     password: string;
 }
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_API_URL || 'https://sense-safe-backend.onrender.com/api';
 
 // Pre-configured test users for quick login (from backend database)
 const TEST_USERS = [
