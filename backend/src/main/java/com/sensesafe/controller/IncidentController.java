@@ -7,6 +7,7 @@ import com.sensesafe.security.JwtUtil;
 import com.sensesafe.service.IncidentService;
 import com.sensesafe.service.UserService;
 import com.sensesafe.service.GeolocationService;
+import com.sensesafe.service.MLAnalysisService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -33,7 +34,89 @@ public class IncidentController {
     private GeolocationService geolocationService;
 
     @Autowired
+    private MLAnalysisService mlAnalysisService;
+
+    @Autowired
     private JwtUtil jwtUtil;
+
+    @PostMapping("/emergency-recommendations")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'VOLUNTEER')")
+    public ResponseEntity<?> getEmergencyRecommendations(@RequestBody EmergencyRecommendationRequest request) {
+        try {
+            // Create a temporary incident for analysis
+            Incident tempIncident = new Incident();
+            tempIncident.setType(request.getType());
+            tempIncident.setDescription(request.getDescription());
+            tempIncident.setLatitude(request.getLatitude());
+            tempIncident.setLongitude(request.getLongitude());
+            tempIncident.setInjuriesReported(request.getInjuriesReported() != null ? request.getInjuriesReported() : 0);
+            tempIncident.setPeopleInvolved(request.getPeopleInvolved() != null ? request.getPeopleInvolved() : 0);
+            tempIncident.setCreatedAt(java.time.LocalDateTime.now());
+            tempIncident.setSeverity(Incident.Severity.MEDIUM); // Default for analysis
+            
+            // Prepare guided questions data
+            Map<String, Object> guidedQuestions = new HashMap<>();
+            guidedQuestions.put("hasInjuries", request.getHasInjuries());
+            guidedQuestions.put("hasBleeding", request.getHasBleeding());
+            guidedQuestions.put("hasUnconsciousPeople", request.getHasUnconsciousPeople());
+            guidedQuestions.put("vehiclesInvolved", request.getVehiclesInvolved());
+            guidedQuestions.put("hasFireRisk", request.getHasFireRisk());
+            guidedQuestions.put("hasExplosionRisk", request.getHasExplosionRisk());
+            guidedQuestions.put("isRoadBlocked", request.getIsRoadBlocked());
+            guidedQuestions.put("trafficSeverity", request.getTrafficSeverity());
+            
+            // Use ML-enhanced emergency service recommendations
+            Map<String, Object> mlResult = mlAnalysisService.recommendEmergencyServices(tempIncident, guidedQuestions);
+            
+            return ResponseEntity.ok(mlResult);
+
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    @PostMapping("/suggest-severity")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'VOLUNTEER')")
+    public ResponseEntity<?> suggestSeverity(@RequestBody SeveritySuggestionRequest request) {
+        try {
+            // Create a temporary incident for ML analysis
+            Incident tempIncident = new Incident();
+            tempIncident.setType(request.getType());
+            tempIncident.setDescription(request.getDescription());
+            tempIncident.setLatitude(request.getLatitude());
+            tempIncident.setLongitude(request.getLongitude());
+            tempIncident.setInjuriesReported(request.getInjuriesReported() != null ? request.getInjuriesReported() : 0);
+            tempIncident.setPeopleInvolved(request.getPeopleInvolved() != null ? request.getPeopleInvolved() : 0);
+            tempIncident.setNearSensitiveLocation(request.getNearSensitiveLocation() != null ? request.getNearSensitiveLocation() : false);
+            tempIncident.setCreatedAt(java.time.LocalDateTime.now());
+            tempIncident.setSeverity(Incident.Severity.MEDIUM); // Default for analysis
+            
+            // Prepare guided questions data
+            Map<String, Object> guidedQuestions = new HashMap<>();
+            guidedQuestions.put("hasInjuries", request.getHasInjuries());
+            guidedQuestions.put("hasBleeding", request.getHasBleeding());
+            guidedQuestions.put("hasUnconsciousPeople", request.getHasUnconsciousPeople());
+            guidedQuestions.put("vehiclesInvolved", request.getVehiclesInvolved());
+            guidedQuestions.put("hasFireRisk", request.getHasFireRisk());
+            guidedQuestions.put("hasExplosionRisk", request.getHasExplosionRisk());
+            guidedQuestions.put("isRoadBlocked", request.getIsRoadBlocked());
+            guidedQuestions.put("trafficSeverity", request.getTrafficSeverity());
+            
+            // Use enhanced ML severity suggestion
+            Map<String, Object> mlResult = mlAnalysisService.suggestSeverity(tempIncident, guidedQuestions);
+            
+            return ResponseEntity.ok(mlResult);
+
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
 
     @PostMapping
     @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'VOLUNTEER')")
@@ -274,6 +357,51 @@ public class IncidentController {
         }
     }
 
+    @GetMapping("/ml-health")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> getMLServiceHealth() {
+        try {
+            boolean isAvailable = mlAnalysisService.isMLServiceAvailable();
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("mlServiceAvailable", isAvailable);
+            response.put("status", isAvailable ? "healthy" : "unavailable");
+            response.put("fallbackMode", !isAvailable);
+            response.put("timestamp", java.time.LocalDateTime.now().toString());
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", e.getMessage());
+            response.put("mlServiceAvailable", false);
+            response.put("status", "error");
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    @GetMapping("/analytics")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> getAnalytics(@RequestParam(defaultValue = "24") int hours) {
+        try {
+            Map<String, Object> analytics = incidentService.getAnalytics(hours);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("analytics", analytics);
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
     @GetMapping("/statistics")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> getIncidentStatistics(@RequestParam(defaultValue = "30") int days) {
@@ -420,5 +548,103 @@ public class IncidentController {
         public void setIsAccurate(Boolean isAccurate) { this.isAccurate = isAccurate; }
         public String getComments() { return comments; }
         public void setComments(String comments) { this.comments = comments; }
+    }
+
+    public static class EmergencyRecommendationRequest {
+        private Incident.IncidentType type;
+        private String description;
+        private Double latitude;
+        private Double longitude;
+        private Integer injuriesReported;
+        private Integer peopleInvolved;
+        private Boolean hasInjuries;
+        private Boolean hasBleeding;
+        private Boolean hasUnconsciousPeople;
+        private Integer vehiclesInvolved;
+        private Boolean hasFireRisk;
+        private Boolean hasExplosionRisk;
+        private Boolean isRoadBlocked;
+        private String trafficSeverity;
+
+        // Getters and setters
+        public Incident.IncidentType getType() { return type; }
+        public void setType(Incident.IncidentType type) { this.type = type; }
+        public String getDescription() { return description; }
+        public void setDescription(String description) { this.description = description; }
+        public Double getLatitude() { return latitude; }
+        public void setLatitude(Double latitude) { this.latitude = latitude; }
+        public Double getLongitude() { return longitude; }
+        public void setLongitude(Double longitude) { this.longitude = longitude; }
+        public Integer getInjuriesReported() { return injuriesReported; }
+        public void setInjuriesReported(Integer injuriesReported) { this.injuriesReported = injuriesReported; }
+        public Integer getPeopleInvolved() { return peopleInvolved; }
+        public void setPeopleInvolved(Integer peopleInvolved) { this.peopleInvolved = peopleInvolved; }
+        public Boolean getHasInjuries() { return hasInjuries; }
+        public void setHasInjuries(Boolean hasInjuries) { this.hasInjuries = hasInjuries; }
+        public Boolean getHasBleeding() { return hasBleeding; }
+        public void setHasBleeding(Boolean hasBleeding) { this.hasBleeding = hasBleeding; }
+        public Boolean getHasUnconsciousPeople() { return hasUnconsciousPeople; }
+        public void setHasUnconsciousPeople(Boolean hasUnconsciousPeople) { this.hasUnconsciousPeople = hasUnconsciousPeople; }
+        public Integer getVehiclesInvolved() { return vehiclesInvolved; }
+        public void setVehiclesInvolved(Integer vehiclesInvolved) { this.vehiclesInvolved = vehiclesInvolved; }
+        public Boolean getHasFireRisk() { return hasFireRisk; }
+        public void setHasFireRisk(Boolean hasFireRisk) { this.hasFireRisk = hasFireRisk; }
+        public Boolean getHasExplosionRisk() { return hasExplosionRisk; }
+        public void setHasExplosionRisk(Boolean hasExplosionRisk) { this.hasExplosionRisk = hasExplosionRisk; }
+        public Boolean getIsRoadBlocked() { return isRoadBlocked; }
+        public void setIsRoadBlocked(Boolean isRoadBlocked) { this.isRoadBlocked = isRoadBlocked; }
+        public String getTrafficSeverity() { return trafficSeverity; }
+        public void setTrafficSeverity(String trafficSeverity) { this.trafficSeverity = trafficSeverity; }
+    }
+
+    public static class SeveritySuggestionRequest {
+        private Incident.IncidentType type;
+        private String description;
+        private Double latitude;
+        private Double longitude;
+        private Integer injuriesReported;
+        private Integer peopleInvolved;
+        private Boolean nearSensitiveLocation;
+        // Guided questions fields
+        private Boolean hasInjuries;
+        private Boolean hasBleeding;
+        private Boolean hasUnconsciousPeople;
+        private Integer vehiclesInvolved;
+        private Boolean hasFireRisk;
+        private Boolean hasExplosionRisk;
+        private Boolean isRoadBlocked;
+        private String trafficSeverity;
+
+        // Getters and setters
+        public Incident.IncidentType getType() { return type; }
+        public void setType(Incident.IncidentType type) { this.type = type; }
+        public String getDescription() { return description; }
+        public void setDescription(String description) { this.description = description; }
+        public Double getLatitude() { return latitude; }
+        public void setLatitude(Double latitude) { this.latitude = latitude; }
+        public Double getLongitude() { return longitude; }
+        public void setLongitude(Double longitude) { this.longitude = longitude; }
+        public Integer getInjuriesReported() { return injuriesReported; }
+        public void setInjuriesReported(Integer injuriesReported) { this.injuriesReported = injuriesReported; }
+        public Integer getPeopleInvolved() { return peopleInvolved; }
+        public void setPeopleInvolved(Integer peopleInvolved) { this.peopleInvolved = peopleInvolved; }
+        public Boolean getNearSensitiveLocation() { return nearSensitiveLocation; }
+        public void setNearSensitiveLocation(Boolean nearSensitiveLocation) { this.nearSensitiveLocation = nearSensitiveLocation; }
+        public Boolean getHasInjuries() { return hasInjuries; }
+        public void setHasInjuries(Boolean hasInjuries) { this.hasInjuries = hasInjuries; }
+        public Boolean getHasBleeding() { return hasBleeding; }
+        public void setHasBleeding(Boolean hasBleeding) { this.hasBleeding = hasBleeding; }
+        public Boolean getHasUnconsciousPeople() { return hasUnconsciousPeople; }
+        public void setHasUnconsciousPeople(Boolean hasUnconsciousPeople) { this.hasUnconsciousPeople = hasUnconsciousPeople; }
+        public Integer getVehiclesInvolved() { return vehiclesInvolved; }
+        public void setVehiclesInvolved(Integer vehiclesInvolved) { this.vehiclesInvolved = vehiclesInvolved; }
+        public Boolean getHasFireRisk() { return hasFireRisk; }
+        public void setHasFireRisk(Boolean hasFireRisk) { this.hasFireRisk = hasFireRisk; }
+        public Boolean getHasExplosionRisk() { return hasExplosionRisk; }
+        public void setHasExplosionRisk(Boolean hasExplosionRisk) { this.hasExplosionRisk = hasExplosionRisk; }
+        public Boolean getIsRoadBlocked() { return isRoadBlocked; }
+        public void setIsRoadBlocked(Boolean isRoadBlocked) { this.isRoadBlocked = isRoadBlocked; }
+        public String getTrafficSeverity() { return trafficSeverity; }
+        public void setTrafficSeverity(String trafficSeverity) { this.trafficSeverity = trafficSeverity; }
     }
 }

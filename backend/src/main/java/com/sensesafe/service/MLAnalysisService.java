@@ -16,6 +16,8 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.List;
+import java.util.ArrayList;
 
 @Service
 public class MLAnalysisService {
@@ -35,6 +37,38 @@ public class MLAnalysisService {
     private final RestTemplate restTemplate = new RestTemplate();
     private final ObjectMapper objectMapper = new ObjectMapper();
 
+    /**
+     * Check if ML service is available
+     */
+    public boolean isMLServiceAvailable() {
+        try {
+            ResponseEntity<String> response = restTemplate.getForEntity(mlBaseUrl + "/health", String.class);
+            return response.getStatusCode().is2xxSuccessful();
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /**
+     * Comprehensive ML analysis for incidents
+     */
+    public Map<String, Object> performComprehensiveAnalysis(Incident incident, User reporter) {
+        Map<String, Object> results = new HashMap<>();
+        
+        // Perform all ML analyses
+        Map<String, Object> fraudResult = analyzeFraud(incident, reporter);
+        Map<String, Object> riskResult = analyzeRisk(incident);
+        Map<String, Object> similarityResult = analyzeSimilarity(incident);
+        
+        results.put("fraud", fraudResult);
+        results.put("risk", riskResult);
+        results.put("similarity", similarityResult);
+        results.put("mlServiceAvailable", isMLServiceAvailable());
+        results.put("analysisTimestamp", LocalDateTime.now().toString());
+        
+        return results;
+    }
+
     public Map<String, Object> analyzeFraud(Incident incident, User reporter) {
         try {
             Map<String, Object> fraudData = prepareFraudData(incident, reporter);
@@ -53,6 +87,7 @@ public class MLAnalysisService {
             result.put("fraudProbability", jsonResponse.get("fraud_probability").asDouble());
             result.put("isFraud", jsonResponse.get("is_fraud").asBoolean());
             result.put("confidence", jsonResponse.get("confidence").asDouble());
+            result.put("mlServiceUsed", true);
             
             return result;
         } catch (Exception e) {
@@ -79,6 +114,7 @@ public class MLAnalysisService {
             result.put("riskScore", jsonResponse.get("risk_score").asDouble());
             result.put("riskLevel", jsonResponse.get("risk_level").asText());
             result.put("confidence", jsonResponse.get("confidence").asDouble());
+            result.put("mlServiceUsed", true);
             
             return result;
         } catch (Exception e) {
@@ -105,12 +141,112 @@ public class MLAnalysisService {
             result.put("similarIncidents", jsonResponse.get("similar_incidents"));
             result.put("similarityScores", jsonResponse.get("similarity_scores"));
             result.put("topMatchScore", jsonResponse.get("top_match_score").asDouble());
+            result.put("mlServiceUsed", true);
             
             return result;
         } catch (Exception e) {
             // Fallback analysis if ML service is unavailable
             return getFallbackSimilarityAnalysis(incident);
         }
+    }
+
+    /**
+     * Enhanced severity suggestion with ML integration
+     */
+    public Map<String, Object> suggestSeverity(Incident incident, Map<String, Object> guidedQuestions) {
+        try {
+            Map<String, Object> data = prepareEnhancedRiskData(incident, guidedQuestions);
+            
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            HttpEntity<Map<String, Object>> request = new HttpEntity<>(data, headers);
+
+            ResponseEntity<String> response = restTemplate.postForEntity(
+                mlBaseUrl + riskEndpoint, request, String.class);
+
+            JsonNode jsonResponse = objectMapper.readTree(response.getBody());
+            
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", jsonResponse.get("success").asBoolean());
+            
+            // Map risk level to severity
+            String riskLevel = jsonResponse.get("risk_level").asText();
+            String suggestedSeverity = mapRiskLevelToSeverity(riskLevel);
+            
+            result.put("suggestedSeverity", suggestedSeverity);
+            result.put("riskScore", jsonResponse.get("risk_score").asDouble());
+            result.put("confidence", jsonResponse.get("confidence").asDouble());
+            result.put("explanation", generateSeverityExplanation(suggestedSeverity, guidedQuestions));
+            result.put("mlServiceUsed", true);
+            
+            return result;
+        } catch (Exception e) {
+            return getFallbackSeveritySuggestion(incident, guidedQuestions);
+        }
+    }
+
+    /**
+     * Emergency service recommendations based on ML analysis
+     */
+    public Map<String, Object> recommendEmergencyServices(Incident incident, Map<String, Object> guidedQuestions) {
+        Map<String, Object> result = new HashMap<>();
+        
+        try {
+            // Get ML risk analysis
+            Map<String, Object> riskAnalysis = analyzeRisk(incident);
+            double riskScore = (Double) riskAnalysis.get("riskScore");
+            
+            // Analyze guided questions
+            boolean hasInjuries = (Boolean) guidedQuestions.getOrDefault("hasInjuries", false);
+            boolean hasBleeding = (Boolean) guidedQuestions.getOrDefault("hasBleeding", false);
+            boolean hasUnconsciousPeople = (Boolean) guidedQuestions.getOrDefault("hasUnconsciousPeople", false);
+            boolean hasFireRisk = (Boolean) guidedQuestions.getOrDefault("hasFireRisk", false);
+            boolean hasExplosionRisk = (Boolean) guidedQuestions.getOrDefault("hasExplosionRisk", false);
+            boolean isRoadBlocked = (Boolean) guidedQuestions.getOrDefault("isRoadBlocked", false);
+            Integer vehiclesInvolved = (Integer) guidedQuestions.getOrDefault("vehiclesInvolved", 0);
+            String trafficSeverity = (String) guidedQuestions.getOrDefault("trafficSeverity", "NONE");
+            
+            // ML-enhanced recommendations
+            boolean recommendAmbulance = hasInjuries || hasBleeding || hasUnconsciousPeople || 
+                                       incident.getType() == Incident.IncidentType.MEDICAL_EMERGENCY ||
+                                       riskScore > 70;
+            
+            boolean recommendPolice = incident.getType() == Incident.IncidentType.ROAD_ACCIDENT ||
+                                    incident.getType() == Incident.IncidentType.VIOLENCE ||
+                                    isRoadBlocked || vehiclesInvolved > 1 ||
+                                    "SEVERE".equals(trafficSeverity);
+            
+            boolean recommendFire = hasFireRisk || hasExplosionRisk ||
+                                  incident.getType() == Incident.IncidentType.FIRE ||
+                                  incident.getType() == Incident.IncidentType.GAS_LEAK;
+            
+            // Determine urgency based on ML risk score and conditions
+            String urgency = "MEDIUM";
+            if (hasUnconsciousPeople || hasBleeding || riskScore > 90) {
+                urgency = "CRITICAL";
+            } else if (hasFireRisk || hasExplosionRisk || riskScore > 75) {
+                urgency = "HIGH";
+            } else if (riskScore < 40 && !hasInjuries) {
+                urgency = "LOW";
+            }
+            
+            String explanation = generateEmergencyServiceExplanation(
+                recommendAmbulance, recommendPolice, recommendFire, riskScore, guidedQuestions);
+            
+            result.put("success", true);
+            result.put("recommendAmbulance", recommendAmbulance);
+            result.put("recommendPolice", recommendPolice);
+            result.put("recommendFire", recommendFire);
+            result.put("urgency", urgency);
+            result.put("explanation", explanation);
+            result.put("riskScore", riskScore);
+            result.put("mlServiceUsed", true);
+            
+        } catch (Exception e) {
+            result = getFallbackEmergencyServiceRecommendation(incident, guidedQuestions);
+        }
+        
+        return result;
     }
 
     private Map<String, Object> prepareFraudData(Incident incident, User reporter) {
@@ -137,6 +273,7 @@ public class MLAnalysisService {
         Map<String, Object> data = new HashMap<>();
         
         data.put("incident_type", incident.getType().name().toLowerCase());
+        data.put("severity", incident.getSeverity().name().toLowerCase());
         data.put("description_length", incident.getDescription().length());
         data.put("has_media", incident.getMediaUrls() != null && !incident.getMediaUrls().isEmpty() ? 1 : 0);
         data.put("upvotes", incident.getUpvotes());
@@ -147,6 +284,24 @@ public class MLAnalysisService {
         data.put("distance_to_responder", incident.getDistanceToResponder() != null ? incident.getDistanceToResponder() : 5.0);
         data.put("near_sensitive_location", incident.getNearSensitiveLocation() ? 1 : 0);
         data.put("time_of_day", getTimeOfDay(incident.getCreatedAt()));
+        
+        return data;
+    }
+
+    private Map<String, Object> prepareEnhancedRiskData(Incident incident, Map<String, Object> guidedQuestions) {
+        Map<String, Object> data = prepareRiskData(incident);
+        
+        // Add guided question data
+        if (guidedQuestions != null) {
+            data.put("has_injuries", guidedQuestions.getOrDefault("hasInjuries", false));
+            data.put("has_bleeding", guidedQuestions.getOrDefault("hasBleeding", false));
+            data.put("has_unconscious_people", guidedQuestions.getOrDefault("hasUnconsciousPeople", false));
+            data.put("vehicles_involved", guidedQuestions.getOrDefault("vehiclesInvolved", 0));
+            data.put("has_fire_risk", guidedQuestions.getOrDefault("hasFireRisk", false));
+            data.put("has_explosion_risk", guidedQuestions.getOrDefault("hasExplosionRisk", false));
+            data.put("is_road_blocked", guidedQuestions.getOrDefault("isRoadBlocked", false));
+            data.put("traffic_severity", guidedQuestions.getOrDefault("trafficSeverity", "NONE"));
+        }
         
         return data;
     }
@@ -165,6 +320,64 @@ public class MLAnalysisService {
         data.put("near_sensitive_location", incident.getNearSensitiveLocation() ? 1 : 0);
         
         return data;
+    }
+
+    private String mapRiskLevelToSeverity(String riskLevel) {
+        return switch (riskLevel.toLowerCase()) {
+            case "critical" -> "CRITICAL";
+            case "high" -> "HIGH";
+            case "medium" -> "MEDIUM";
+            case "low" -> "LOW";
+            default -> "MEDIUM";
+        };
+    }
+
+    private String generateSeverityExplanation(String severity, Map<String, Object> guidedQuestions) {
+        StringBuilder explanation = new StringBuilder("ML Analysis suggests ");
+        explanation.append(severity.toLowerCase()).append(" severity based on: ");
+        
+        List<String> factors = new ArrayList<>();
+        
+        if (guidedQuestions != null) {
+            if ((Boolean) guidedQuestions.getOrDefault("hasUnconsciousPeople", false)) {
+                factors.add("unconscious people reported");
+            }
+            if ((Boolean) guidedQuestions.getOrDefault("hasBleeding", false)) {
+                factors.add("bleeding injuries");
+            }
+            if ((Boolean) guidedQuestions.getOrDefault("hasFireRisk", false)) {
+                factors.add("fire risk present");
+            }
+            if ((Boolean) guidedQuestions.getOrDefault("hasExplosionRisk", false)) {
+                factors.add("explosion risk");
+            }
+        }
+        
+        if (factors.isEmpty()) {
+            factors.add("incident type and location analysis");
+        }
+        
+        explanation.append(String.join(", ", factors));
+        return explanation.toString();
+    }
+
+    private String generateEmergencyServiceExplanation(boolean ambulance, boolean police, boolean fire, 
+                                                     double riskScore, Map<String, Object> guidedQuestions) {
+        StringBuilder explanation = new StringBuilder("ML-enhanced recommendation (Risk Score: ");
+        explanation.append(Math.round(riskScore)).append("%): ");
+        
+        List<String> services = new ArrayList<>();
+        if (ambulance) services.add("Ambulance");
+        if (police) services.add("Police");
+        if (fire) services.add("Fire Brigade");
+        
+        if (services.isEmpty()) {
+            explanation.append("No emergency services required at this time.");
+        } else {
+            explanation.append(String.join(" + ", services)).append(" recommended");
+        }
+        
+        return explanation.toString();
     }
 
     private boolean isNightTime(LocalDateTime dateTime) {
@@ -204,6 +417,7 @@ public class MLAnalysisService {
         result.put("fraudProbability", Math.min(fraudScore, 1.0));
         result.put("isFraud", fraudScore > 0.5);
         result.put("confidence", 0.7);
+        result.put("mlServiceUsed", false);
         
         return result;
     }
@@ -252,6 +466,7 @@ public class MLAnalysisService {
         result.put("riskScore", riskScore);
         result.put("riskLevel", riskLevel);
         result.put("confidence", 0.8);
+        result.put("mlServiceUsed", false);
         
         return result;
     }
@@ -263,6 +478,71 @@ public class MLAnalysisService {
         result.put("similarIncidents", new Object[0]);
         result.put("similarityScores", new double[0]);
         result.put("topMatchScore", 0.0);
+        result.put("mlServiceUsed", false);
+        
+        return result;
+    }
+
+    private Map<String, Object> getFallbackSeveritySuggestion(Incident incident, Map<String, Object> guidedQuestions) {
+        Map<String, Object> result = new HashMap<>();
+        
+        String suggestedSeverity = "MEDIUM"; // Default
+        
+        // Rule-based severity suggestion
+        if (guidedQuestions != null) {
+            if ((Boolean) guidedQuestions.getOrDefault("hasUnconsciousPeople", false) ||
+                (Boolean) guidedQuestions.getOrDefault("hasExplosionRisk", false)) {
+                suggestedSeverity = "CRITICAL";
+            } else if ((Boolean) guidedQuestions.getOrDefault("hasBleeding", false) ||
+                      (Boolean) guidedQuestions.getOrDefault("hasFireRisk", false)) {
+                suggestedSeverity = "HIGH";
+            } else if ((Boolean) guidedQuestions.getOrDefault("hasInjuries", false)) {
+                suggestedSeverity = "MEDIUM";
+            }
+        }
+        
+        result.put("success", true);
+        result.put("suggestedSeverity", suggestedSeverity);
+        result.put("confidence", 0.7);
+        result.put("explanation", "Rule-based analysis suggests " + suggestedSeverity.toLowerCase() + " severity");
+        result.put("mlServiceUsed", false);
+        
+        return result;
+    }
+
+    private Map<String, Object> getFallbackEmergencyServiceRecommendation(Incident incident, Map<String, Object> guidedQuestions) {
+        Map<String, Object> result = new HashMap<>();
+        
+        boolean recommendAmbulance = false;
+        boolean recommendPolice = false;
+        boolean recommendFire = false;
+        String urgency = "MEDIUM";
+        
+        if (guidedQuestions != null) {
+            recommendAmbulance = (Boolean) guidedQuestions.getOrDefault("hasInjuries", false) ||
+                               (Boolean) guidedQuestions.getOrDefault("hasBleeding", false) ||
+                               (Boolean) guidedQuestions.getOrDefault("hasUnconsciousPeople", false);
+            
+            recommendPolice = (Boolean) guidedQuestions.getOrDefault("isRoadBlocked", false) ||
+                            (Integer) guidedQuestions.getOrDefault("vehiclesInvolved", 0) > 1;
+            
+            recommendFire = (Boolean) guidedQuestions.getOrDefault("hasFireRisk", false) ||
+                          (Boolean) guidedQuestions.getOrDefault("hasExplosionRisk", false);
+            
+            if ((Boolean) guidedQuestions.getOrDefault("hasUnconsciousPeople", false)) {
+                urgency = "CRITICAL";
+            } else if (recommendFire) {
+                urgency = "HIGH";
+            }
+        }
+        
+        result.put("success", true);
+        result.put("recommendAmbulance", recommendAmbulance);
+        result.put("recommendPolice", recommendPolice);
+        result.put("recommendFire", recommendFire);
+        result.put("urgency", urgency);
+        result.put("explanation", "Rule-based emergency service recommendation");
+        result.put("mlServiceUsed", false);
         
         return result;
     }

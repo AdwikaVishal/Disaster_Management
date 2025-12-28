@@ -119,7 +119,17 @@ public class NotificationService {
                          "Lat: " + user.getLatitude() + ", Lng: " + user.getLongitude();
 
         // Send email alerts to emergency contacts
-        emailService.sendSOSAlert(emergencyContacts, userInfo, location, message);
+        emailService.sendEnhancedSOSAlert(
+            emergencyContacts, 
+            user.getFirstName() + " " + user.getLastName(),
+            user.getEmail(),
+            user.getPhoneNumber(),
+            location,
+            user.getLatitude(),
+            user.getLongitude(),
+            message,
+            java.time.LocalDateTime.now()
+        );
 
         // Send WebSocket notification to admins
         Map<String, Object> sosAlert = new HashMap<>();

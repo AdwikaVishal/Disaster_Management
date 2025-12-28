@@ -87,22 +87,53 @@ public class EmergencyController {
                 return ResponseEntity.badRequest().body(response);
             }
 
-            // Send SOS alert
+            // Validate location data
+            if (request.getLatitude() == null || request.getLongitude() == null) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", false);
+                response.put("message", "Location data is required for SOS alert");
+                return ResponseEntity.badRequest().body(response);
+            }
+
+            // Create location string
+            String locationString = request.getLocation() != null ? request.getLocation() : 
+                                  String.format("Coordinates: %.6f, %.6f", request.getLatitude(), request.getLongitude());
+
+            // Send SOS alert with enhanced information
             if (user != null) {
-                notificationService.sendSOSAlert(user, request.getMessage(), emergencyContacts);
+                emailService.sendEnhancedSOSAlert(
+                    emergencyContacts,
+                    user.getFirstName() + " " + user.getLastName(),
+                    user.getEmail(),
+                    user.getPhoneNumber(),
+                    locationString,
+                    request.getLatitude(),
+                    request.getLongitude(),
+                    request.getMessage(),
+                    java.time.LocalDateTime.now()
+                );
             } else {
                 // Create temporary user info for anonymous SOS
                 String userInfo = request.getName() + " (" + request.getPhoneNumber() + ")";
-                String location = request.getLocation() != null ? request.getLocation() : 
-                                "Lat: " + request.getLatitude() + ", Lng: " + request.getLongitude();
                 
-                emailService.sendSOSAlert(emergencyContacts, userInfo, location, request.getMessage());
+                emailService.sendEnhancedSOSAlert(
+                    emergencyContacts,
+                    request.getName(),
+                    request.getEmail(),
+                    request.getPhoneNumber(),
+                    locationString,
+                    request.getLatitude(),
+                    request.getLongitude(),
+                    request.getMessage(),
+                    java.time.LocalDateTime.now()
+                );
             }
 
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("message", "SOS alert sent successfully");
             response.put("contactsNotified", emergencyContacts.size());
+            response.put("timestamp", java.time.LocalDateTime.now().toString());
 
             return ResponseEntity.ok(response);
 
@@ -150,22 +181,45 @@ public class EmergencyController {
             User user = userService.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-            // Send alert to hospitals
-            String hospitalEmail = "emergency@cityhospital.com"; // In real app, this would be dynamic
-            String userContact = user.getPhoneNumber() != null ? user.getPhoneNumber() : user.getEmail();
-            
-            emailService.sendHospitalAlert(
-                hospitalEmail,
-                request.getEmergencyType() + " - " + request.getDescription(),
-                request.getLocation(),
-                userContact
+            // Validate required fields
+            if (request.getHospitalEmail() == null || request.getPatientName() == null || 
+                request.getCallbackNumber() == null) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", false);
+                response.put("message", "Hospital email, patient name, and callback number are required");
+                return ResponseEntity.badRequest().body(response);
+            }
+
+            // Prepare hospital alert data
+            String locationInfo = request.getLocation();
+            if (request.getLatitude() != null && request.getLongitude() != null) {
+                locationInfo = String.format("%s (Coordinates: %.6f, %.6f)", 
+                    locationInfo != null ? locationInfo : "Emergency Location",
+                    request.getLatitude(), 
+                    request.getLongitude());
+            }
+
+            // Send enhanced hospital alert email
+            emailService.sendEnhancedHospitalAlert(
+                request.getHospitalEmail(),
+                request.getHospitalName(),
+                request.getPatientName(),
+                locationInfo,
+                request.getLatitude(),
+                request.getLongitude(),
+                request.getInjuries(),
+                request.getCallbackNumber(),
+                request.getUrgency(),
+                request.getAdditionalInfo(),
+                user.getFirstName() + " " + user.getLastName()
             );
 
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("message", "Hospital alert sent successfully");
-            response.put("hospitalNumber", hospitalNumber);
-            response.put("estimatedResponse", "5-10 minutes");
+            response.put("hospitalName", request.getHospitalName());
+            response.put("patientName", request.getPatientName());
+            response.put("estimatedResponse", "5-15 minutes");
 
             return ResponseEntity.ok(response);
 
@@ -242,6 +296,7 @@ public class EmergencyController {
         private String message;
         private List<String> emergencyContacts;
         private String name; // For anonymous SOS
+        private String email; // For anonymous SOS
         private String phoneNumber; // For anonymous SOS
         private String location;
         private Double latitude;
@@ -254,6 +309,8 @@ public class EmergencyController {
         public void setEmergencyContacts(List<String> emergencyContacts) { this.emergencyContacts = emergencyContacts; }
         public String getName() { return name; }
         public void setName(String name) { this.name = name; }
+        public String getEmail() { return email; }
+        public void setEmail(String email) { this.email = email; }
         public String getPhoneNumber() { return phoneNumber; }
         public void setPhoneNumber(String phoneNumber) { this.phoneNumber = phoneNumber; }
         public String getLocation() { return location; }
@@ -265,16 +322,41 @@ public class EmergencyController {
     }
 
     public static class HospitalDialRequest {
-        private String emergencyType;
-        private String description;
+        private String hospitalId;
+        private String hospitalName;
+        private String hospitalEmail;
+        private String patientName;
         private String location;
+        private Double latitude;
+        private Double longitude;
+        private String injuries;
+        private String callbackNumber;
+        private String urgency;
+        private String additionalInfo;
 
-        public String getEmergencyType() { return emergencyType; }
-        public void setEmergencyType(String emergencyType) { this.emergencyType = emergencyType; }
-        public String getDescription() { return description; }
-        public void setDescription(String description) { this.description = description; }
+        // Getters and setters
+        public String getHospitalId() { return hospitalId; }
+        public void setHospitalId(String hospitalId) { this.hospitalId = hospitalId; }
+        public String getHospitalName() { return hospitalName; }
+        public void setHospitalName(String hospitalName) { this.hospitalName = hospitalName; }
+        public String getHospitalEmail() { return hospitalEmail; }
+        public void setHospitalEmail(String hospitalEmail) { this.hospitalEmail = hospitalEmail; }
+        public String getPatientName() { return patientName; }
+        public void setPatientName(String patientName) { this.patientName = patientName; }
         public String getLocation() { return location; }
         public void setLocation(String location) { this.location = location; }
+        public Double getLatitude() { return latitude; }
+        public void setLatitude(Double latitude) { this.latitude = latitude; }
+        public Double getLongitude() { return longitude; }
+        public void setLongitude(Double longitude) { this.longitude = longitude; }
+        public String getInjuries() { return injuries; }
+        public void setInjuries(String injuries) { this.injuries = injuries; }
+        public String getCallbackNumber() { return callbackNumber; }
+        public void setCallbackNumber(String callbackNumber) { this.callbackNumber = callbackNumber; }
+        public String getUrgency() { return urgency; }
+        public void setUrgency(String urgency) { this.urgency = urgency; }
+        public String getAdditionalInfo() { return additionalInfo; }
+        public void setAdditionalInfo(String additionalInfo) { this.additionalInfo = additionalInfo; }
     }
 
     public static class UpdateContactsRequest {

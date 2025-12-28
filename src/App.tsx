@@ -7,9 +7,11 @@ import { HelmetProvider } from "react-helmet-async";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { IncidentProvider } from "./context/IncidentContext";
 import Login from "./pages/Login";
+import HomePage from "./pages/HomePage";
 import UserDashboard from "./pages/UserDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import CommandCenter from "./pages/CommandCenter";
+import HospitalContactsPage from "./pages/HospitalContactsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -47,6 +49,10 @@ const AppRoutes: React.FC = () => {
         }
       />
       <Route
+        path="/home"
+        element={<HomePage />}
+      />
+      <Route
         path="/dashboard"
         element={
           <ProtectedRoute allowedRole="user">
@@ -67,6 +73,14 @@ const AppRoutes: React.FC = () => {
         element={
           <ProtectedRoute allowedRole="admin">
             <AdminDashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/hospitals"
+        element={
+          <ProtectedRoute>
+            <HospitalContactsPage />
           </ProtectedRoute>
         }
       />

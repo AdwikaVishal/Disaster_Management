@@ -10,7 +10,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/blockchain")
+@RequestMapping("/api/blockchain")
 @CrossOrigin(origins = {"http://localhost:3000", "http://localhost:5173"})
 @PreAuthorize("hasRole('ADMIN')")
 public class BlockchainController {
@@ -84,6 +84,7 @@ public class BlockchainController {
     }
 
     @GetMapping("/health")
+    @PreAuthorize("permitAll()")
     public ResponseEntity<?> healthCheck() {
         try {
             Map<String, Object> result = blockchainService.healthCheck();
@@ -94,6 +95,31 @@ public class BlockchainController {
             Map<String, Object> response = new HashMap<>();
             response.put("status", "unhealthy");
             response.put("error", e.getMessage());
+            return ResponseEntity.ok(response);
+        }
+    }
+
+    @GetMapping("/status")
+    @PreAuthorize("permitAll()")
+    public ResponseEntity<?> getBlockchainStatus() {
+        try {
+            Map<String, Object> health = blockchainService.healthCheck();
+            Map<String, Object> status = new HashMap<>();
+            
+            status.put("isConnected", "healthy".equals(health.get("status")));
+            status.put("contractAddress", health.get("contractAddress"));
+            status.put("latestBlock", health.get("latestBlock"));
+            status.put("networkId", health.get("networkId"));
+            status.put("abiLoaded", health.get("abiLoaded"));
+            status.put("lastChecked", System.currentTimeMillis());
+            
+            return ResponseEntity.ok(status);
+            
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("isConnected", false);
+            response.put("error", e.getMessage());
+            response.put("lastChecked", System.currentTimeMillis());
             return ResponseEntity.ok(response);
         }
     }

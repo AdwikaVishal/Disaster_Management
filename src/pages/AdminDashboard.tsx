@@ -19,8 +19,9 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/button';
 import IncidentCard from '../components/IncidentCard';
 import StatCard from '../components/StatCard';
-import IncidentMap from '../components/IncidentMap';
+import LiveIncidentMap from '../components/LiveIncidentMap';
 import NotificationBell from '../components/NotificationBell';
+import AdminAnalyticsDashboard from '../components/AdminAnalyticsDashboard';
 import { useIncidents } from '../context/IncidentContext';
 import { useAuth } from '../context/AuthContext';
 import { sortByPriority, getStatusColor } from '../utils/helpers';
@@ -185,7 +186,7 @@ const AdminDashboard: React.FC = () => {
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div>
                   <h3 className="text-lg font-semibold mb-3">Live Map</h3>
-                  <IncidentMap incidents={sortedIncidents} className="h-80" />
+                  <LiveIncidentMap incidents={sortedIncidents} className="h-80" />
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold mb-3">Priority Queue</h3>
@@ -205,7 +206,7 @@ const AdminDashboard: React.FC = () => {
 
           {activeTab === 'map' && (
             <div className="fade-in h-[calc(100vh-12rem)]">
-              <IncidentMap incidents={sortedIncidents} className="h-full" />
+              <LiveIncidentMap incidents={sortedIncidents} className="h-full" />
             </div>
           )}
 
@@ -322,86 +323,7 @@ const AdminDashboard: React.FC = () => {
           )}
 
           {activeTab === 'analytics' && (
-            <div className="fade-in space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <StatCard
-                  title="Total Incidents"
-                  value={mockAnalytics.totalIncidents}
-                  icon={List}
-                />
-                <StatCard
-                  title="People Reported"
-                  value="2.4k"
-                  icon={Users}
-                  trend="up"
-                  trendValue="8%"
-                />
-                <StatCard
-                  title="Avg Response"
-                  value={`${mockAnalytics.avgResponseTime}m`}
-                  icon={Clock}
-                  trend="down"
-                  trendValue="15%"
-                />
-                <StatCard
-                  title="Resolution Rate"
-                  value="94%"
-                  icon={CheckCircle}
-                  variant="success"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="bg-card border border-border rounded-xl p-6">
-                  <h3 className="text-lg font-semibold mb-4">Incidents by Type</h3>
-                  <div className="space-y-3">
-                    {Object.entries(mockAnalytics.incidentsByType || {}).map(
-                      ([type, count]) => (
-                        <div key={type} className="flex items-center gap-3">
-                          <span className="w-24 text-sm text-muted-foreground">
-                            {type}
-                          </span>
-                          <div className="flex-1 h-4 bg-muted rounded-full overflow-hidden">
-                            <div
-                              className="h-full bg-primary rounded-full transition-all"
-                              style={{
-                                width: `${((count as number) / mockAnalytics.totalIncidents) * 100}%`,
-                              }}
-                            />
-                          </div>
-                          <span className="text-sm font-medium w-8 text-right">
-                            {count as number}
-                          </span>
-                        </div>
-                      )
-                    )}
-                  </div>
-                </div>
-
-                <div className="bg-card border border-border rounded-xl p-6">
-                  <h3 className="text-lg font-semibold mb-4">Risk Distribution</h3>
-                  <div className="flex items-end justify-around h-48">
-                    {['Low', 'Medium', 'High', 'Critical'].map((level, i) => (
-                      <div key={level} className="flex flex-col items-center gap-2">
-                        <div
-                          className={`w-16 rounded-t-lg transition-all ${
-                            level === 'Low'
-                              ? 'bg-success'
-                              : level === 'Medium'
-                              ? 'bg-warning'
-                              : level === 'High'
-                              ? 'bg-destructive'
-                              : 'bg-critical'
-                          }`}
-                          style={{ height: `${mockAnalytics.riskLevels[i] * 4}px` }}
-                        />
-                        <span className="text-xs text-muted-foreground">{level}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
+            <AdminAnalyticsDashboard />
           )}
 
           {activeTab === 'users' && (

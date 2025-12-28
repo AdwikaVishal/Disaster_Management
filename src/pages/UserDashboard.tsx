@@ -30,10 +30,11 @@ import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import IncidentCard from '../components/IncidentCard';
-import IncidentMap from '../components/IncidentMap';
+import LiveIncidentMap from '../components/LiveIncidentMap';
 import NotificationBell from '../components/NotificationBell';
 import ReportModal from '../components/ReportModal';
 import StatCard from '../components/StatCard';
+import SOSButton from '../components/SOSButton';
 import { useIncidents } from '../context/IncidentContext';
 import { useAuth } from '../context/AuthContext';
 import { sortByPriority, formatTimeAgo } from '../utils/helpers';
@@ -49,7 +50,6 @@ const UserDashboard: React.FC = () => {
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [currentLocation, setCurrentLocation] = useState('Detecting location...');
   const [showProfileModal, setShowProfileModal] = useState(false);
-  const [showSOSConfirm, setShowSOSConfirm] = useState(false);
 
   const nearbyIncidents = sortByPriority(
     incidents.filter((i) => i.status !== 'Resolved')
@@ -69,13 +69,6 @@ const UserDashboard: React.FC = () => {
   const handleLogout = () => {
     logout();
     navigate('/');
-  };
-
-  const handleSOSAlert = () => {
-    setShowSOSConfirm(false);
-    toast.success('Emergency alert sent!', {
-      description: 'Emergency services have been notified of your location.',
-    });
   };
 
   const handleVerifyIncident = (id: string) => {
@@ -252,14 +245,11 @@ const UserDashboard: React.FC = () => {
                       <Map className="w-6 h-6 mr-3" />
                       View Live Map
                     </Button>
-                    <Button
-                      onClick={() => setShowSOSConfirm(true)}
-                      variant="destructive"
+                    <SOSButton
+                      variant="inline"
+                      size="lg"
                       className="h-16 text-lg font-semibold"
-                    >
-                      <Phone className="w-6 h-6 mr-3" />
-                      Emergency SOS
-                    </Button>
+                    />
                   </div>
                 </CardContent>
               </Card>
@@ -278,7 +268,7 @@ const UserDashboard: React.FC = () => {
                       </div>
                     </div>
                     <div className="relative">
-                      <IncidentMap incidents={nearbyIncidents} className="h-64" />
+                      <LiveIncidentMap incidents={nearbyIncidents} className="h-64" />
                       <Button 
                         onClick={() => setActiveTab('map')}
                         size="sm" 
@@ -503,7 +493,7 @@ const UserDashboard: React.FC = () => {
 
           {activeTab === 'map' && (
             <div className="fade-in h-[calc(100vh-12rem)]">
-              <IncidentMap incidents={nearbyIncidents} className="h-full rounded-xl" />
+              <LiveIncidentMap incidents={nearbyIncidents} className="h-full rounded-xl" />
             </div>
           )}
 
@@ -576,51 +566,7 @@ const UserDashboard: React.FC = () => {
       </nav>
 
       {/* Floating SOS Button - Only on mobile */}
-      <button
-        onClick={() => setShowSOSConfirm(true)}
-        className="fixed bottom-20 right-4 w-14 h-14 bg-red-500 hover:bg-red-600 text-white rounded-full shadow-2xl flex items-center justify-center z-30 lg:hidden"
-        aria-label="Emergency SOS Alert"
-      >
-        <Phone className="w-6 h-6" />
-        <div className="absolute inset-0 bg-red-500 rounded-full animate-ping opacity-75" />
-      </button>
-
-      {/* SOS Confirmation Modal */}
-      {showSOSConfirm && (
-        <>
-          <div
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50"
-            onClick={() => setShowSOSConfirm(false)}
-          />
-          <div className="fixed inset-x-4 top-1/2 -translate-y-1/2 bg-white rounded-2xl shadow-2xl z-50 max-w-sm mx-auto">
-            <div className="p-6 text-center">
-              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Phone className="w-8 h-8 text-red-600" />
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">Send Emergency Alert?</h3>
-              <p className="text-gray-600 mb-6">
-                This will immediately notify emergency services of your location and situation.
-              </p>
-              <div className="flex gap-3">
-                <Button
-                  onClick={() => setShowSOSConfirm(false)}
-                  variant="outline"
-                  className="flex-1"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={handleSOSAlert}
-                  className="flex-1 bg-red-600 hover:bg-red-700 text-white"
-                >
-                  <Zap className="w-4 h-4 mr-2" />
-                  Send Alert
-                </Button>
-              </div>
-            </div>
-          </div>
-        </>
-      )}
+      <SOSButton className="lg:hidden" />
 
       {/* Report Modal */}
       <ReportModal

@@ -68,13 +68,9 @@ public class AuthController {
     @PostMapping("/login-user")
     public ResponseEntity<?> loginUser(@Valid @RequestBody LoginUserRequest request) {
         try {
-            // Authenticate using email and password
-            Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
-            );
-
-            UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-            User user = userService.findByEmail(request.getEmail()).orElseThrow();
+            // Find user by email first
+            User user = userService.findByEmail(request.getEmail())
+                .orElseThrow(() -> new RuntimeException("User not found"));
             
             // Verify user role is USER (not ADMIN)
             if (user.getRole() == User.Role.ADMIN) {
@@ -83,6 +79,13 @@ public class AuthController {
                 response.put("message", "Admin users must use OTP login");
                 return ResponseEntity.badRequest().body(response);
             }
+            
+            // Authenticate using username and password (since Spring Security expects username)
+            Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(user.getUsername(), request.getPassword())
+            );
+
+            UserDetails userDetails = (UserDetails) authentication.getPrincipal();
             
             // Update last login
             userService.updateLastLogin(user.getUsername());
