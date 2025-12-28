@@ -72,6 +72,7 @@ export const IncidentService = {
                 method: 'POST',
                 headers,
                 body: JSON.stringify(data),
+                credentials: 'include',
             });
 
             return await handleResponse(response);
@@ -91,7 +92,10 @@ export const IncidentService = {
             if (token) {
                 headers['Authorization'] = `Bearer ${token}`;
             }
-            const response = await fetch(`${API_URL}?hours=${hours}`, { headers });
+            const response = await fetch(`${API_URL}?hours=${hours}`, { 
+                headers,
+                credentials: 'include'
+            });
             return await handleResponse(response);
         } catch (error) {
             console.error('Get incidents error:', error);
@@ -109,7 +113,10 @@ export const IncidentService = {
             if (token) {
                 headers['Authorization'] = `Bearer ${token}`;
             }
-            const response = await fetch(`${API_URL}/nearby?latitude=${latitude}&longitude=${longitude}&radiusKm=${radiusKm}`, { headers });
+            const response = await fetch(`${API_URL}/nearby?latitude=${latitude}&longitude=${longitude}&radiusKm=${radiusKm}`, { 
+                headers,
+                credentials: 'include'
+            });
             return await handleResponse(response);
         } catch (error) {
             console.error('Get nearby incidents error:', error);
@@ -127,7 +134,10 @@ export const IncidentService = {
             if (token) {
                 headers['Authorization'] = `Bearer ${token}`;
             }
-            const response = await fetch(`${API_URL}/location-info?latitude=${latitude}&longitude=${longitude}`, { headers });
+            const response = await fetch(`${API_URL}/location-info?latitude=${latitude}&longitude=${longitude}`, { 
+                headers,
+                credentials: 'include'
+            });
             return await handleResponse(response);
         } catch (error) {
             console.error('Get location info error:', error);
@@ -150,6 +160,7 @@ export const IncidentService = {
                 method: 'POST',
                 headers,
                 body: JSON.stringify(data),
+                credentials: 'include',
             });
             return await handleResponse(response);
         } catch (error) {
@@ -173,6 +184,7 @@ export const IncidentService = {
                 method: 'POST',
                 headers,
                 body: JSON.stringify(data),
+                credentials: 'include',
             });
             return await handleResponse(response);
         } catch (error) {
@@ -191,7 +203,8 @@ export const IncidentService = {
             }
 
             const response = await fetch(`${API_URL}/ml-health`, {
-                headers
+                headers,
+                credentials: 'include'
             });
             return await handleResponse(response);
         } catch (error) {
@@ -212,7 +225,8 @@ export const IncidentService = {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify({ status })
+                body: JSON.stringify({ status }),
+                credentials: 'include'
             });
             return await handleResponse(response);
         } catch (error) {

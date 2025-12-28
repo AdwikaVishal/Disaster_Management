@@ -72,6 +72,7 @@ export const VolunteerService = {
                             'Authorization': `Bearer ${token}`
                         },
                         body: JSON.stringify(requestData),
+                        credentials: 'include',
                     });
 
                     if (response.ok) {
@@ -129,7 +130,8 @@ export const VolunteerService = {
                 const response = await fetch(`${API_URL}/applications`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
-                    }
+                    },
+                    credentials: 'include',
                 });
                 if (response.ok) {
                     const result = await handleResponse(response);
@@ -179,7 +181,8 @@ export const VolunteerService = {
             const response = await fetch(`${API_URL}/applications/my`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
-                }
+                },
+                credentials: 'include',
             });
 
             // Handle potential HTML response explicitly here or use wrapper
@@ -236,6 +239,7 @@ export const VolunteerService = {
                     decision: status,
                     reviewNotes: notes || ''
                 }),
+                credentials: 'include',
             });
 
             const result = await handleResponse(response);
