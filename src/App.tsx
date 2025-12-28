@@ -1,3 +1,4 @@
+import { ReactNode } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { LandingPage } from '@/pages/public/LandingPage';
 import { UserLoginPage } from '@/pages/auth/UserLoginPage';
@@ -24,7 +25,7 @@ import AuditLogs from '@/pages/admin/AuditLogs';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
 
 // Protected Route Component (Bypassed for mock mode effectively, but keeps structure)
-const ProtectedRoute = ({ children, requireAdmin = false }: { children: JSX.Element, requireAdmin?: boolean }) => {
+const ProtectedRoute = ({ children, requireAdmin = false }: { children: ReactNode, requireAdmin?: boolean }) => {
   const { user, loading } = useAuth();
 
   // In mock mode, we might want to auto-login a default user if none exists, or just redirect
