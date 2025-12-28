@@ -50,6 +50,7 @@ public class SecurityConfig {
                         .requestMatchers("/h2-console/**").permitAll()
                         .requestMatchers("/websocket/**").permitAll()
                         .requestMatchers("/emergency/sos").permitAll()
+                        .requestMatchers("/api/incidents/**").permitAll()
 
                         // Admin only endpoints
                         .requestMatchers("/admin/**").hasRole("ADMIN")
