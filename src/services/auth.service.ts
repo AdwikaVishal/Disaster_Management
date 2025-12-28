@@ -31,7 +31,7 @@ export interface SignupData {
     password: string;
 }
 
-const API_URL = `${import.meta.env.VITE_API_URL}/auth`;
+const API_URL = import.meta.env.VITE_API_URL;
 
 // Pre-configured test users for quick login (from backend database)
 const TEST_USERS = [
@@ -60,7 +60,8 @@ export const AuthService = {
     // Real backend login
     loginUser: async (data: LoginData): Promise<AuthResponse> => {
         try {
-            const response = await fetch(`${API_URL}/login-user`, {
+            // Updated to use the correct endpoint path: /auth/login-user
+            const response = await fetch(`${API_URL}/auth/login-user`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data),
@@ -82,7 +83,7 @@ export const AuthService = {
 
     signup: async (data: SignupData): Promise<AuthResponse> => {
         try {
-            const response = await fetch(`${API_URL}/signup`, {
+            const response = await fetch(`${API_URL}/auth/signup`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data),
@@ -96,7 +97,7 @@ export const AuthService = {
 
     verifySignupOtp: async (email: string, otp: string): Promise<AuthResponse> => {
         try {
-            const response = await fetch(`${API_URL}/verify-signup`, {
+            const response = await fetch(`${API_URL}/auth/verify-signup`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, otp }),
@@ -115,7 +116,7 @@ export const AuthService = {
 
     requestAdminOtp: async (email: string): Promise<AuthResponse> => {
         try {
-            const response = await fetch(`${API_URL}/login-admin-otp`, {
+            const response = await fetch(`${API_URL}/auth/login-admin-otp`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email }),
@@ -129,7 +130,7 @@ export const AuthService = {
 
     verifyAdminOtp: async (email: string, otp: string): Promise<AuthResponse> => {
         try {
-            const response = await fetch(`${API_URL}/verify-otp`, {
+            const response = await fetch(`${API_URL}/auth/verify-otp`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, otp }),
