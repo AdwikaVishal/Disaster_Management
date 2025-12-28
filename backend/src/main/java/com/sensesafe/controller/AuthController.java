@@ -20,7 +20,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping("/auth")
 public class AuthController {
 
     @Autowired
@@ -114,38 +114,53 @@ public class AuthController {
     @PostMapping("/login-user")
     public ResponseEntity<?> loginUser(@Valid @RequestBody LoginUserRequest request) {
         try {
+            // Find user by email
             User user = userService.findByEmail(request.getEmail())
-                    .orElseThrow(() -> new RuntimeException("User not found"));
+                    .orElse(null);
 
-            // Optional: Check if verified
-            // if (!user.isVerified()) { ... } for now we let them login but maybe they
-            // can't do things?
+            if (user == null) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", false);
+                response.put("message", "Invalid email or password");
+                return ResponseEntity.status(401).body(response);
+            }
 
-            Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(user.getUsername(), request.getPassword()));
+            // Authenticate user
+            try {
+                Authentication authentication = authenticationManager.authenticate(
+                        new UsernamePasswordAuthenticationToken(user.getUsername(), request.getPassword()));
 
-            UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-            userService.updateLastLogin(user.getUsername());
+                UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+                userService.updateLastLogin(user.getUsername());
 
-            Map<String, Object> claims = new HashMap<>();
-            claims.put("userId", user.getId());
-            claims.put("role", user.getRole().name());
-            claims.put("email", user.getEmail());
+                Map<String, Object> claims = new HashMap<>();
+                claims.put("userId", user.getId());
+                claims.put("role", user.getRole().name());
+                claims.put("email", user.getEmail());
 
-            String token = jwtUtil.generateToken(userDetails, claims);
+                String token = jwtUtil.generateToken(userDetails, claims);
 
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("token", token);
-            response.put("user", createUserResponse(user));
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", true);
+                response.put("token", token);
+                response.put("user", createUserResponse(user));
 
-            return ResponseEntity.ok(response);
+                return ResponseEntity.ok(response);
+
+            } catch (org.springframework.security.core.AuthenticationException authEx) {
+                // Authentication failed (wrong password)
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", false);
+                response.put("message", "Invalid email or password");
+                return ResponseEntity.status(401).body(response);
+            }
 
         } catch (Exception e) {
+            // Catch any other unexpected errors
             Map<String, Object> response = new HashMap<>();
             response.put("success", false);
-            response.put("message", "Invalid email or password");
-            return ResponseEntity.badRequest().body(response);
+            response.put("message", "An error occurred during login. Please try again.");
+            return ResponseEntity.status(500).body(response);
         }
     }
 
@@ -237,6 +252,16 @@ public class AuthController {
             response.put("valid", false);
             return ResponseEntity.ok(response);
         }
+    }
+
+    // Test endpoint to verify CORS and API connectivity
+    @GetMapping("/test")
+    public ResponseEntity<?> testEndpoint() {
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("message", "Auth API is working!");
+        response.put("timestamp", System.currentTimeMillis());
+        return ResponseEntity.ok(response);
     }
 
     private Map<String, Object> createUserResponse(User user) {

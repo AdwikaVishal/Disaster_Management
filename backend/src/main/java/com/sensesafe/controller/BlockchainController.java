@@ -10,7 +10,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/blockchain")
+@RequestMapping("/blockchain")
 @PreAuthorize("hasRole('ADMIN')")
 public class BlockchainController {
 

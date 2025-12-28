@@ -20,7 +20,7 @@ import java.util.Map;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/incidents")
+@RequestMapping("/incidents")
 public class IncidentController {
 
     @Autowired

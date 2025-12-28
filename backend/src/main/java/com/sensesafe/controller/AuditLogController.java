@@ -16,7 +16,7 @@ import java.util.Map;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/audit")
+@RequestMapping("/audit")
 @PreAuthorize("hasRole('ADMIN')")
 public class AuditLogController {
 
