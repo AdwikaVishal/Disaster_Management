@@ -90,3 +90,5 @@ jspm_packages/
 yarn.lock
 pnpm-lock.yaml
 bun.lockb
+
+application.properties
