@@ -31,7 +31,7 @@ export interface SignupData {
     password: string;
 }
 
-const API_URL = '/api/auth';
+const API_URL = `${import.meta.env.VITE_API_BASE_URL || ''}/api/auth`;
 
 // Pre-configured test users for quick login (from backend database)
 const TEST_USERS = [

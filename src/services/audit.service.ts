@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:8080/api/audit';
+const API_BASE_URL = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'}/api/audit`;
 
 export interface AuditLog {
   id: number;
@@ -64,7 +64,7 @@ class AuditService {
     currentPage: number;
   }> {
     const params = new URLSearchParams();
-    
+
     if (filters.actionType) params.append('actionType', filters.actionType);
     if (filters.userId) params.append('userId', filters.userId);
     if (filters.status) params.append('status', filters.status);
@@ -73,11 +73,11 @@ class AuditService {
     if (filters.page !== undefined) params.append('page', filters.page.toString());
     if (filters.size !== undefined) params.append('size', filters.size.toString());
     if (filters.sort) params.append('sort', filters.sort);
-    
+
     const response = await axios.get(`${API_BASE_URL}/logs?${params.toString()}`, {
       headers: this.getHeaders(),
     });
-    
+
     return {
       logs: response.data.content,
       totalElements: response.data.totalElements,
@@ -107,7 +107,7 @@ class AuditService {
     const response = await axios.get(`${API_BASE_URL}/user/${userId}?page=${page}&size=${size}`, {
       headers: this.getHeaders(),
     });
-    
+
     return {
       logs: response.data.content,
       totalElements: response.data.totalElements,
@@ -126,7 +126,7 @@ class AuditService {
     const response = await axios.get(`${API_BASE_URL}/action/${actionType}?page=${page}&size=${size}`, {
       headers: this.getHeaders(),
     });
-    
+
     return {
       logs: response.data.content,
       totalElements: response.data.totalElements,
@@ -189,18 +189,18 @@ class AuditService {
    */
   async exportAuditLogs(filters: AuditLogFilters = {}): Promise<string> {
     const params = new URLSearchParams();
-    
+
     if (filters.actionType) params.append('actionType', filters.actionType);
     if (filters.userId) params.append('userId', filters.userId);
     if (filters.status) params.append('status', filters.status);
     if (filters.startDate) params.append('startDate', filters.startDate);
     if (filters.endDate) params.append('endDate', filters.endDate);
-    
+
     const response = await axios.get(`${API_BASE_URL}/export?${params.toString()}`, {
       headers: this.getHeaders(),
       responseType: 'text',
     });
-    
+
     return response.data;
   }
 
@@ -209,7 +209,7 @@ class AuditService {
    */
   async downloadCsv(filters: AuditLogFilters = {}): Promise<void> {
     const csvContent = await this.exportAuditLogs(filters);
-    
+
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');

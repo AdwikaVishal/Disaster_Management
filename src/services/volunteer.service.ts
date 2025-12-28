@@ -33,7 +33,7 @@ export interface CreateVolunteerApplicationData {
     maxDistanceKm?: number;
 }
 
-const API_URL = '/api/volunteers';
+const API_URL = `${import.meta.env.VITE_API_BASE_URL || ''}/api/volunteers`;
 
 export const VolunteerService = {
     // Submit volunteer application - REAL BACKEND with Fallback

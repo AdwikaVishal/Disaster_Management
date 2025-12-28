@@ -60,6 +60,7 @@ com/sensesafe/controller/VolunteerController$ReviewApplicationRequest.class
 com/sensesafe/service/MLAnalysisService$1.class
 com/sensesafe/model/User$Role.class
 com/sensesafe/SenseSafeApplication.class
+com/sensesafe/SenseSafeApplication$1.class
 com/sensesafe/controller/EmergencyController$UpdateContactsRequest.class
 com/example/blockchain/IncidentAudit$2.class
 com/sensesafe/security/JwtAuthenticationEntryPoint.class
