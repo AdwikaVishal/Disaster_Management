@@ -43,30 +43,29 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.cors().and().csrf().disable()
-            .exceptionHandling().authenticationEntryPoint(jwtAuthenticationEntryPoint).and()
-            .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
-            .authorizeHttpRequests(authz -> authz
-                // Public endpoints
-                .requestMatchers("/auth/**").permitAll()
-                .requestMatchers("/public/**").permitAll()
-                .requestMatchers("/h2-console/**").permitAll()
-                .requestMatchers("/websocket/**").permitAll()
-                .requestMatchers("/emergency/sos").permitAll()
-                
-                // Admin only endpoints
-                .requestMatchers("/admin/**").hasRole("ADMIN")
-                .requestMatchers("/blockchain/**").hasRole("ADMIN")
-                .requestMatchers("/volunteers/applications/review/**").hasRole("ADMIN")
-                
-                // User and Admin endpoints
-                .requestMatchers("/incidents/**").hasAnyRole("USER", "ADMIN", "VOLUNTEER")
-                .requestMatchers("/users/profile/**").hasAnyRole("USER", "ADMIN", "VOLUNTEER")
-                .requestMatchers("/volunteers/apply").hasRole("USER")
-                .requestMatchers("/emergency/contacts").hasAnyRole("USER", "ADMIN", "VOLUNTEER")
-                
-                // All other requests need authentication
-                .anyRequest().authenticated()
-            );
+                .exceptionHandling().authenticationEntryPoint(jwtAuthenticationEntryPoint).and()
+                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
+                .authorizeHttpRequests(authz -> authz
+                        // Public endpoints
+                        .requestMatchers("/auth/**").permitAll()
+                        .requestMatchers("/public/**").permitAll()
+                        .requestMatchers("/h2-console/**").permitAll()
+                        .requestMatchers("/websocket/**").permitAll()
+                        .requestMatchers("/emergency/sos").permitAll()
+
+                        // Admin only endpoints
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/blockchain/**").hasRole("ADMIN")
+                        .requestMatchers("/volunteers/applications/review/**").hasRole("ADMIN")
+
+                        // User and Admin endpoints
+                        .requestMatchers("/incidents/**").hasAnyRole("USER", "ADMIN", "VOLUNTEER")
+                        .requestMatchers("/users/profile/**").hasAnyRole("USER", "ADMIN", "VOLUNTEER")
+                        .requestMatchers("/volunteers/apply").hasRole("USER")
+                        .requestMatchers("/emergency/contacts").hasAnyRole("USER", "ADMIN", "VOLUNTEER")
+
+                        // All other requests need authentication
+                        .anyRequest().authenticated());
 
         // Disable frame options for H2 console
         http.headers().frameOptions().disable();
@@ -83,7 +82,7 @@ public class SecurityConfig {
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowCredentials(true);
-        
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;

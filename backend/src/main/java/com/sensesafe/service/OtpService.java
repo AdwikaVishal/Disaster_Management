@@ -35,7 +35,18 @@ public class OtpService {
             throw new RuntimeException("Admin user not found with email: " + email);
         }
 
-        User admin = userOpt.get();
+        return generateAndSendOtp(userOpt.get());
+    }
+
+    public String generateOtpForUser(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found: " + email));
+
+        return generateAndSendOtp(user);
+    }
+
+    private String generateAndSendOtp(User user) {
+        String email = user.getEmail();
 
         // Mark all existing OTPs for this email as used
         otpTokenRepository.markAllUsedByEmail(email);
@@ -48,20 +59,20 @@ public class OtpService {
         otpTokenRepository.save(otpToken);
 
         // Send OTP via email
-        emailService.sendOtpEmail(admin.getEmail(), otp, admin.getFirstName());
+        emailService.sendOtpEmail(email, otp, user.getFirstName());
 
-        return "OTP sent to registered email address";
+        return "OTP sent successfully";
     }
 
     public boolean verifyOtp(String email, String otp) {
         Optional<OtpToken> otpTokenOpt = otpTokenRepository.findValidOtp(email, otp, LocalDateTime.now());
-        
+
         if (otpTokenOpt.isEmpty()) {
             return false;
         }
 
         OtpToken otpToken = otpTokenOpt.get();
-        
+
         // Mark OTP as used
         otpToken.setUsed(true);
         otpTokenRepository.save(otpToken);
