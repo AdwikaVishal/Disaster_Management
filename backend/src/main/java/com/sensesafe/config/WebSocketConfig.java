@@ -12,9 +12,11 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
-        // Enable a simple memory-based message broker to carry messages back to the client
+        // Enable a simple memory-based message broker to carry messages back to the
+        // client
         config.enableSimpleBroker("/topic", "/queue");
-        // Designate the "/app" prefix for messages that are bound for @MessageMapping methods
+        // Designate the "/app" prefix for messages that are bound for @MessageMapping
+        // methods
         config.setApplicationDestinationPrefixes("/app");
     }
 
@@ -22,12 +24,24 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         // Register the "/ws" endpoint for WebSocket connections
         registry.addEndpoint("/ws")
-                .setAllowedOriginPatterns("http://localhost:*", "https://localhost:*")
+                .setAllowedOriginPatterns(
+                        "http://localhost:*",
+                        "https://localhost:*",
+                        "https://disaster-management-dqqa.onrender.com",
+                        "https://disaster-management.onrender.com",
+                        "https://disaster-management-q9tn.vercel.app",
+                        "https://disaster-management-mauve.vercel.app")
                 .withSockJS();
-        
+
         // Register endpoint for incident updates
         registry.addEndpoint("/ws/incidents")
-                .setAllowedOriginPatterns("http://localhost:*", "https://localhost:*")
+                .setAllowedOriginPatterns(
+                        "http://localhost:*",
+                        "https://localhost:*",
+                        "https://disaster-management-dqqa.onrender.com",
+                        "https://disaster-management.onrender.com",
+                        "https://disaster-management-q9tn.vercel.app",
+                        "https://disaster-management-mauve.vercel.app")
                 .withSockJS();
     }
 }

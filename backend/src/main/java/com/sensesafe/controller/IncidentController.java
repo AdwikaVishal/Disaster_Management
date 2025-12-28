@@ -21,8 +21,6 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/incidents")
-@CrossOrigin(origins = { "http://localhost:3000", "http://localhost:5173", "https://disaster-management.onrender.com",
-        "https://disaster-management-dqqa.onrender.com", "https://disaster-management-mauve.vercel.app" })
 public class IncidentController {
 
     @Autowired

@@ -11,7 +11,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/blockchain")
-@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:5173"})
 @PreAuthorize("hasRole('ADMIN')")
 public class BlockchainController {
 
@@ -23,9 +22,9 @@ public class BlockchainController {
         try {
             Long incidentId = Long.valueOf(request.get("incidentId").toString());
             Map<String, Object> result = blockchainService.logVerified(incidentId);
-            
+
             return ResponseEntity.ok(result);
-            
+
         } catch (Exception e) {
             Map<String, Object> response = new HashMap<>();
             response.put("success", false);
@@ -39,11 +38,11 @@ public class BlockchainController {
         try {
             Long incidentId = Long.valueOf(request.get("incidentId").toString());
             String resourceId = request.get("resourceId").toString();
-            
+
             Map<String, Object> result = blockchainService.logResource(incidentId, resourceId);
-            
+
             return ResponseEntity.ok(result);
-            
+
         } catch (Exception e) {
             Map<String, Object> response = new HashMap<>();
             response.put("success", false);
@@ -57,9 +56,9 @@ public class BlockchainController {
         try {
             Long incidentId = Long.valueOf(request.get("incidentId").toString());
             Map<String, Object> result = blockchainService.logResolved(incidentId);
-            
+
             return ResponseEntity.ok(result);
-            
+
         } catch (Exception e) {
             Map<String, Object> response = new HashMap<>();
             response.put("success", false);
@@ -72,9 +71,9 @@ public class BlockchainController {
     public ResponseEntity<?> getAuditTrail(@PathVariable Long incidentId) {
         try {
             Map<String, Object> result = blockchainService.getIncidentAuditTrail(incidentId);
-            
+
             return ResponseEntity.ok(result);
-            
+
         } catch (Exception e) {
             Map<String, Object> response = new HashMap<>();
             response.put("success", false);
@@ -88,9 +87,9 @@ public class BlockchainController {
     public ResponseEntity<?> healthCheck() {
         try {
             Map<String, Object> result = blockchainService.healthCheck();
-            
+
             return ResponseEntity.ok(result);
-            
+
         } catch (Exception e) {
             Map<String, Object> response = new HashMap<>();
             response.put("status", "unhealthy");
@@ -105,16 +104,16 @@ public class BlockchainController {
         try {
             Map<String, Object> health = blockchainService.healthCheck();
             Map<String, Object> status = new HashMap<>();
-            
+
             status.put("isConnected", "healthy".equals(health.get("status")));
             status.put("contractAddress", health.get("contractAddress"));
             status.put("latestBlock", health.get("latestBlock"));
             status.put("networkId", health.get("networkId"));
             status.put("abiLoaded", health.get("abiLoaded"));
             status.put("lastChecked", System.currentTimeMillis());
-            
+
             return ResponseEntity.ok(status);
-            
+
         } catch (Exception e) {
             Map<String, Object> response = new HashMap<>();
             response.put("isConnected", false);

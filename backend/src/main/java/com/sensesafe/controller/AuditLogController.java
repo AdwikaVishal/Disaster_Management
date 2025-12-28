@@ -17,7 +17,6 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/audit")
-@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:5173"})
 @PreAuthorize("hasRole('ADMIN')")
 public class AuditLogController {
 
@@ -46,10 +45,11 @@ public class AuditLogController {
             String[] sortParams = sort.split(",");
             Sort.Direction direction = Sort.Direction.fromString(sortParams[1]);
             Sort sortObj = Sort.by(direction, sortParams[0]);
-            
+
             Pageable pageable = PageRequest.of(page, size, sortObj);
-            Page<AuditLog> auditLogs = auditLogService.getAuditLogs(actionType, userId, status, startDate, endDate, pageable);
-            
+            Page<AuditLog> auditLogs = auditLogService.getAuditLogs(actionType, userId, status, startDate, endDate,
+                    pageable);
+
             return ResponseEntity.ok(auditLogs);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
@@ -191,13 +191,13 @@ public class AuditLogController {
 
         try {
             String csvContent = auditLogService.exportAuditLogsToCSV(actionType, userId, status, startDate, endDate);
-            
+
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
             headers.setContentDisposition(ContentDisposition.attachment()
                     .filename("audit-logs-" + System.currentTimeMillis() + ".csv")
                     .build());
-            
+
             return new ResponseEntity<>(csvContent, headers, HttpStatus.OK);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
@@ -246,7 +246,7 @@ public class AuditLogController {
             AuditLog auditLog = new AuditLog(actionType, userId, "ADMIN", status != null ? status : "SUCCESS");
             auditLog.setTargetType(targetType);
             auditLog.setTargetId(targetId);
-            
+
             Map<String, Object> result = blockchainService.logGenericAudit(auditLog);
             return ResponseEntity.ok(result);
         } catch (Exception e) {
