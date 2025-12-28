@@ -33,7 +33,22 @@ export interface CreateVolunteerApplicationData {
     maxDistanceKm?: number;
 }
 
-const API_URL = `${import.meta.env.VITE_API_BASE_URL || ''}/api/volunteers`;
+const API_URL = `${import.meta.env.VITE_API_URL}/volunteers`;
+
+const handleResponse = async (response: Response): Promise<any> => {
+    const contentType = response.headers.get("content-type");
+    if (contentType && contentType.indexOf("application/json") !== -1) {
+        return await response.json();
+    } else {
+        const text = await response.text();
+        console.error("Non-JSON response:", text);
+        try {
+            return JSON.parse(text);
+        } catch (e) {
+            throw new Error("Server returned non-JSON response");
+        }
+    }
+};
 
 export const VolunteerService = {
     // Submit volunteer application - REAL BACKEND with Fallback
@@ -60,7 +75,7 @@ export const VolunteerService = {
                     });
 
                     if (response.ok) {
-                        const result = await response.json();
+                        const result = await handleResponse(response);
                         return result;
                     }
                 } catch (err) {
@@ -117,7 +132,7 @@ export const VolunteerService = {
                     }
                 });
                 if (response.ok) {
-                    const result = await response.json();
+                    const result = await handleResponse(response);
                     if (result.success && result.applications) {
                         backendApps = result.applications;
                     }
@@ -167,7 +182,8 @@ export const VolunteerService = {
                 }
             });
 
-            const result = await response.json();
+            // Handle potential HTML response explicitly here or use wrapper
+            const result = await handleResponse(response);
 
             // Merge with local mock apps if successful
             if (result.success && result.applications) {
@@ -222,7 +238,7 @@ export const VolunteerService = {
                 }),
             });
 
-            const result = await response.json();
+            const result = await handleResponse(response);
             return result;
         } catch (error) {
             console.error('Update application error:', error);

@@ -36,30 +36,45 @@ export interface CreateIncidentData {
     mediaUrls?: string[];
     injuriesReported?: number;
     peopleInvolved?: number;
+    tags?: string[];
 }
 
-const API_URL = `${import.meta.env.VITE_API_BASE_URL || ''}/api/incidents`;
+const API_URL = `${import.meta.env.VITE_API_URL}/incidents`;
+
+const handleResponse = async (response: Response): Promise<any> => {
+    const contentType = response.headers.get("content-type");
+    if (contentType && contentType.indexOf("application/json") !== -1) {
+        return await response.json();
+    } else {
+        const text = await response.text();
+        console.error("Non-JSON response:", text);
+        try {
+            return JSON.parse(text);
+        } catch (e) {
+            throw new Error("Server returned non-JSON response");
+        }
+    }
+};
 
 export const IncidentService = {
     // Create a new incident - REAL BACKEND
     createIncident: async (data: CreateIncidentData): Promise<{ success: boolean; message?: string; incident?: Incident }> => {
         try {
             const token = AuthService.getToken();
-            if (!token) {
-                return { success: false, message: 'Not authenticated' };
+            const headers: HeadersInit = {
+                'Content-Type': 'application/json'
+            };
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
             }
 
             const response = await fetch(API_URL, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
+                headers,
                 body: JSON.stringify(data),
             });
 
-            const result = await response.json();
-            return result;
+            return await handleResponse(response);
         } catch (error) {
             console.error('Create incident error:', error);
             return { success: false, message: 'Failed to create incident' };
@@ -77,8 +92,7 @@ export const IncidentService = {
                 headers['Authorization'] = `Bearer ${token}`;
             }
             const response = await fetch(`${API_URL}?hours=${hours}`, { headers });
-            const result = await response.json();
-            return result;
+            return await handleResponse(response);
         } catch (error) {
             console.error('Get incidents error:', error);
             return { success: false, message: 'Failed to fetch incidents' };
@@ -96,8 +110,7 @@ export const IncidentService = {
                 headers['Authorization'] = `Bearer ${token}`;
             }
             const response = await fetch(`${API_URL}/nearby?latitude=${latitude}&longitude=${longitude}&radiusKm=${radiusKm}`, { headers });
-            const result = await response.json();
-            return result;
+            return await handleResponse(response);
         } catch (error) {
             console.error('Get nearby incidents error:', error);
             return { success: false, message: 'Failed to fetch nearby incidents' };
@@ -115,8 +128,7 @@ export const IncidentService = {
                 headers['Authorization'] = `Bearer ${token}`;
             }
             const response = await fetch(`${API_URL}/location-info?latitude=${latitude}&longitude=${longitude}`, { headers });
-            const result = await response.json();
-            return result;
+            return await handleResponse(response);
         } catch (error) {
             console.error('Get location info error:', error);
             return { success: false, message: 'Failed to fetch location info' };
@@ -127,16 +139,19 @@ export const IncidentService = {
     suggestSeverity: async (data: any): Promise<{ success: boolean; suggestedSeverity?: string; riskScore?: number; explanation?: string; message?: string }> => {
         try {
             const token = AuthService.getToken();
+            const headers: HeadersInit = {
+                'Content-Type': 'application/json'
+            };
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+
             const response = await fetch(`${API_URL}/suggest-severity`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
+                headers,
                 body: JSON.stringify(data),
             });
-            const result = await response.json();
-            return result;
+            return await handleResponse(response);
         } catch (error) {
             console.error('Severity suggestion error:', error);
             return { success: false, message: 'Failed to get severity suggestion' };
@@ -147,16 +162,19 @@ export const IncidentService = {
     getEmergencyRecommendations: async (data: any): Promise<{ success: boolean; recommendAmbulance?: boolean; recommendPolice?: boolean; recommendFire?: boolean; explanation?: string; message?: string }> => {
         try {
             const token = AuthService.getToken();
+            const headers: HeadersInit = {
+                'Content-Type': 'application/json'
+            };
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+
             const response = await fetch(`${API_URL}/emergency-recommendations`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
+                headers,
                 body: JSON.stringify(data),
             });
-            const result = await response.json();
-            return result;
+            return await handleResponse(response);
         } catch (error) {
             console.error('Emergency recommendation error:', error);
             return { success: false, message: 'Failed to get emergency recommendations' };
@@ -167,13 +185,15 @@ export const IncidentService = {
     getMLHealth: async (): Promise<{ success: boolean; mlServiceAvailable?: boolean; status?: string; message?: string }> => {
         try {
             const token = AuthService.getToken();
+            const headers: HeadersInit = {};
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+
             const response = await fetch(`${API_URL}/ml-health`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
+                headers
             });
-            const result = await response.json();
-            return result;
+            return await handleResponse(response);
         } catch (error) {
             console.error('ML health check error:', error);
             return { success: false, message: 'Failed to check ML health' };
@@ -194,8 +214,7 @@ export const IncidentService = {
                 },
                 body: JSON.stringify({ status })
             });
-            const result = await response.json();
-            return result;
+            return await handleResponse(response);
         } catch (error) {
             console.error('Update status error:', error);
             return { success: false, message: 'Failed to update status' };

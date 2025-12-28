@@ -18,7 +18,7 @@ export default function EmergencyControl() {
     const fetchSystemConfig = async () => {
         try {
             setError(null);
-            const response = await fetch('/api/admin/system-config', {
+            const response = await fetch(`${import.meta.env.VITE_API_URL}/admin/system-config`, {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`,
                     'Content-Type': 'application/json'
@@ -26,8 +26,12 @@ export default function EmergencyControl() {
             });
 
             if (response.ok) {
-                const data = await response.json();
-                setSystemConfig(data.systemConfig);
+                try {
+                    const data = await response.json();
+                    setSystemConfig(data.systemConfig);
+                } catch (e) {
+                    setError('Invalid server response');
+                }
             } else {
                 setError('Failed to fetch system configuration');
             }
@@ -45,7 +49,7 @@ export default function EmergencyControl() {
             setUpdating(configKey);
             setError(null);
 
-            const response = await fetch(`/api/admin/system-config/${configKey}`, {
+            const response = await fetch(`${import.meta.env.VITE_API_URL}/admin/system-config/${configKey}`, {
                 method: 'PUT',
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -55,15 +59,19 @@ export default function EmergencyControl() {
             });
 
             if (response.ok) {
-                const data = await response.json();
-                // Update local state
-                setSystemConfig((prev: any) => ({
-                    ...prev,
-                    [configKey]: {
-                        ...prev[configKey],
-                        enabled: data.config.enabled
-                    }
-                }));
+                try {
+                    const data = await response.json();
+                    // Update local state
+                    setSystemConfig((prev: any) => ({
+                        ...prev,
+                        [configKey]: {
+                            ...prev[configKey],
+                            enabled: data.config.enabled
+                        }
+                    }));
+                } catch (e) {
+                    setError('Invalid server response');
+                }
             } else {
                 setError('Failed to update system configuration');
             }
@@ -81,7 +89,7 @@ export default function EmergencyControl() {
         const initializeAndFetch = async () => {
             try {
                 // Try to initialize system configurations
-                await fetch('/api/admin/system-config/initialize', {
+                await fetch(`${import.meta.env.VITE_API_URL}/admin/system-config/initialize`, {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${localStorage.getItem('token')}`,

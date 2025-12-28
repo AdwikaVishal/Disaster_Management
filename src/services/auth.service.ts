@@ -31,7 +31,7 @@ export interface SignupData {
     password: string;
 }
 
-const API_URL = `${import.meta.env.VITE_API_URL}/api/auth`;
+const API_URL = `${import.meta.env.VITE_API_URL}/auth`;
 
 // Pre-configured test users for quick login (from backend database)
 const TEST_USERS = [
@@ -40,17 +40,33 @@ const TEST_USERS = [
     { email: 'admin@sensesafe.com', password: 'admin123', role: 'ADMIN' },
 ];
 
+const handleResponse = async (response: Response): Promise<any> => {
+    const contentType = response.headers.get("content-type");
+    if (contentType && contentType.indexOf("application/json") !== -1) {
+        return await response.json();
+    } else {
+        const text = await response.text();
+        console.error("Non-JSON response:", text);
+        // Attempt to parse anyway in case header is wrong, or return error
+        try {
+            return JSON.parse(text);
+        } catch (e) {
+            throw new Error("Server returned non-JSON response");
+        }
+    }
+};
+
 export const AuthService = {
     // Real backend login
     loginUser: async (data: LoginData): Promise<AuthResponse> => {
         try {
-            const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/login-user`, {
+            const response = await fetch(`${API_URL}/login-user`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data),
             });
 
-            const result = await response.json();
+            const result = await handleResponse(response);
 
             if (result.success && result.token) {
                 localStorage.setItem('token', result.token);
@@ -71,7 +87,7 @@ export const AuthService = {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data),
             });
-            return await response.json();
+            return await handleResponse(response);
         } catch (error) {
             console.error('Signup error:', error);
             return { success: false, message: 'Network error occurred' };
@@ -85,7 +101,7 @@ export const AuthService = {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, otp }),
             });
-            const result = await response.json();
+            const result = await handleResponse(response);
             if (result.success && result.token) {
                 localStorage.setItem('token', result.token);
                 localStorage.setItem('user', JSON.stringify(result.user));
@@ -104,7 +120,7 @@ export const AuthService = {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email }),
             });
-            return await response.json();
+            return await handleResponse(response);
         } catch (error) {
             console.error('Request OTP error:', error);
             return { success: false, message: 'Failed to send OTP' };
@@ -118,7 +134,7 @@ export const AuthService = {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, otp }),
             });
-            const result = await response.json();
+            const result = await handleResponse(response);
             if (result.success && result.token) {
                 localStorage.setItem('token', result.token);
                 localStorage.setItem('user', JSON.stringify(result.user));
