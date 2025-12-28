@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Production Login</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f9f9f9;
+            border-left: 4px solid #4CAF50;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        label {
+            display: block;
+            margin-top: 10px;
+            font-weight: bold;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Production Login Test</h1>
+        <p><strong>Backend:</strong> https://sense-safe-backend.onrender.com</p>
+        <p><strong>Frontend:</strong> https://disaster-management-dqqa.onrender.com</p>
+
+        <div class="test-section">
+            <h3>Test 1: Backend Health Check</h3>
+            <button onclick="testHealth()">Test Backend Health</button>
+            <div id="health-result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>Test 2: CORS Preflight</h3>
+            <button onclick="testCORS()">Test CORS</button>
+            <div id="cors-result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>Test 3: Login</h3>
+            <label>Email:</label>
+            <input type="email" id="email" value="john@example.com" placeholder="Email">
+            <label>Password:</label>
+            <input type="password" id="password" value="password123" placeholder="Password">
+            <button onclick="testLogin()">Test Login</button>
+            <div id="login-result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>Test 4: Network Inspection</h3>
+            <button onclick="inspectNetwork()">Inspect Network</button>
+            <div id="network-result"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'https://sense-safe-backend.onrender.com/api';
+
+        function showResult(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.className = `result ${type}`;
+            element.textContent = message;
+        }
+
+        async function testHealth() {
+            showResult('health-result', 'Testing...', 'info');
+            try {
+                const response = await fetch(`${API_URL}/auth/test`, {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult('health-result', 
+                        `✅ SUCCESS!\n\nStatus: ${response.status}\nResponse: ${JSON.stringify(data, null, 2)}`,
+                        'success'
+                    );
+                } else {
+                    showResult('health-result', 
+                        `❌ FAILED\n\nStatus: ${response.status}\nResponse: ${JSON.stringify(data, null, 2)}`,
+                        'error'
+                    );
+                }
+            } catch (error) {
+                showResult('health-result', 
+                    `❌ ERROR\n\n${error.message}\n\nThis usually means:\n- CORS is blocking the request\n- Backend is down\n- Network issue`,
+                    'error'
+                );
+            }
+        }
+
+        async function testCORS() {
+            showResult('cors-result', 'Testing CORS...', 'info');
+            try {
+                const response = await fetch(`${API_URL}/auth/login-user`, {
+                    method: 'OPTIONS',
+                    headers: {
+                        'Access-Control-Request-Method': 'POST',
+                        'Access-Control-Request-Headers': 'content-type'
+                    }
+                });
+                
+                const corsOrigin = response.headers.get('Access-Control-Allow-Origin');
+                const corsCredentials = response.headers.get('Access-Control-Allow-Credentials');
+                const corsMethods = response.headers.get('Access-Control-Allow-Methods');
+                
+                if (corsOrigin) {
+                    showResult('cors-result', 
+                        `✅ CORS IS WORKING!\n\nStatus: ${response.status}\nAccess-Control-Allow-Origin: ${corsOrigin}\nAccess-Control-Allow-Credentials: ${corsCredentials}\nAccess-Control-Allow-Methods: ${corsMethods}`,
+                        'success'
+                    );
+                } else {
+                    showResult('cors-result', 
+                        `❌ CORS NOT CONFIGURED\n\nNo CORS headers found in response`,
+                        'error'
+                    );
+                }
+            } catch (error) {
+                showResult('cors-result', 
+                    `❌ CORS TEST FAILED\n\n${error.message}`,
+                    'error'
+                );
+            }
+        }
+
+        async function testLogin() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            showResult('login-result', 'Logging in...', 'info');
+            
+            try {
+                const response = await fetch(`${API_URL}/auth/login-user`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password }),
+                    credentials: 'include'
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    showResult('login-result', 
+                        `✅ LOGIN SUCCESS!\n\nStatus: ${response.status}\nToken: ${data.token.substring(0, 50)}...\nUser: ${data.user.email}\nRole: ${data.user.role}`,
+                        'success'
+                    );
+                } else {
+                    showResult('login-result', 
+                        `❌ LOGIN FAILED\n\nStatus: ${response.status}\nMessage: ${data.message || 'Unknown error'}\nResponse: ${JSON.stringify(data, null, 2)}`,
+                        'error'
+                    );
+                }
+            } catch (error) {
+                showResult('login-result', 
+                    `❌ NETWORK ERROR\n\n${error.message}\n\nPossible causes:\n1. CORS is blocking the request\n2. Backend is not responding\n3. Network connectivity issue\n4. Browser cache (try Ctrl+Shift+R)`,
+                    'error'
+                );
+            }
+        }
+
+        async function inspectNetwork() {
+            showResult('network-result', 'Inspecting...', 'info');
+            
+            const checks = [];
+            
+            // Check 1: Can we reach the backend?
+            try {
+                const response = await fetch(`${API_URL}/auth/test`);
+                checks.push(`✅ Backend is reachable (Status: ${response.status})`);
+            } catch (error) {
+                checks.push(`❌ Cannot reach backend: ${error.message}`);
+            }
+            
+            // Check 2: Browser info
+            checks.push(`\n📱 Browser: ${navigator.userAgent}`);
+            checks.push(`🌐 Online: ${navigator.onLine ? 'Yes' : 'No'}`);
+            
+            // Check 3: Current origin
+            checks.push(`\n🔗 Current Origin: ${window.location.origin}`);
+            checks.push(`🎯 Target Backend: ${API_URL}`);
+            
+            // Check 4: Cookies
+            checks.push(`\n🍪 Cookies enabled: ${navigator.cookieEnabled ? 'Yes' : 'No'}`);
+            
+            showResult('network-result', checks.join('\n'), 'info');
+        }
+
+        // Auto-run health check on load
+        window.addEventListener('load', () => {
+            console.log('🧪 Production Login Test Page Loaded');
+            console.log('Backend URL:', API_URL);
+            console.log('Run tests by clicking the buttons above');
+        });
+    </script>
+</body>
+</html>
