@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { AlertTriangle, MapPin, Droplets, Wind, ThermometerSun, Loader2, ShieldAlert } from 'lucide-react';
+import { AlertTriangle, MapPin, Droplets, Wind, ThermometerSun, Loader2, ShieldAlert, Check } from 'lucide-react';
 import { IncidentService, Incident } from '@/services/incident.service';
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -21,14 +21,18 @@ export default function Overview() {
             try {
                 const response = await IncidentService.getAllIncidents(24);
                 if (response.success && response.incidents) {
-                    setIncidents(response.incidents);
+                    // Filter to show only VERIFIED incidents (from admin verification queue)
+                    const activeIncidents = response.incidents
+                        .filter(i => i.status === 'VERIFIED')
+                        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+                    setIncidents(activeIncidents);
 
                     // Calculate simple stats
-                    const active = response.incidents.filter(i => i.status !== 'RESOLVED' && i.status !== 'REJECTED').length;
-                    const highRiskCount = response.incidents.filter(i => i.severity === 'CRITICAL' || i.severity === 'HIGH').length;
+                    const highRiskCount = activeIncidents.filter(i => i.severity === 'CRITICAL' || i.severity === 'HIGH').length;
 
                     setStats({
-                        activeCount: active,
+                        activeCount: activeIncidents.length,
                         riskLevel: highRiskCount > 5 ? 'Critical' : highRiskCount > 2 ? 'High' : 'Low'
                     });
                 }
@@ -40,6 +44,8 @@ export default function Overview() {
         };
 
         fetchData();
+        const interval = setInterval(fetchData, 10000); // Poll every 10 seconds
+        return () => clearInterval(interval);
     }, []);
 
     return (
@@ -126,7 +132,14 @@ export default function Overview() {
                                             </div>
                                             <div className="flex-1">
                                                 <div className="flex justify-between items-start mb-1">
-                                                    <h4 className="font-semibold">{incident.type}</h4>
+                                                    <div className="flex items-center gap-2">
+                                                        <h4 className="font-semibold">{incident.type}</h4>
+                                                        {incident.status === 'VERIFIED' && (
+                                                            <span className="flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 uppercase tracking-wider">
+                                                                <Check className="w-3 h-3" /> Verified
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                     <div className="flex gap-2">
                                                         {(incident as any).riskScore > 0 && (
                                                             <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 flex items-center gap-1">

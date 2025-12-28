@@ -1,4 +1,3 @@
-import React from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import {
@@ -8,11 +7,11 @@ import {
     BrainCircuit,
     ArrowRight,
     Siren,
-    Activity,
-    CheckCircle2
+    Activity
 } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
+import { IncidentMap } from '@/components/ui/IncidentMap';
 
 const container = {
     hidden: { opacity: 0 },
@@ -80,18 +79,14 @@ export const LandingPage = () => {
                         </div>
                     </motion.div>
 
-                    {/* Hero Image Mockup */}
+                    {/* Interactive Live Map */}
                     <motion.div
                         initial={{ opacity: 0, y: 40 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.3, duration: 0.7 }}
-                        className="mt-20 relative mx-auto max-w-5xl rounded-2xl border border-border/50 shadow-2xl overflow-hidden glass aspect-[16/9] flex items-center justify-center bg-gray-50/50 dark:bg-gray-900/50"
+                        className="mt-20 relative mx-auto max-w-7xl"
                     >
-                        <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent z-10" />
-                        <div className="text-center p-10">
-                            <MapPin className="w-16 h-16 text-primary mx-auto mb-4 animate-bounce" />
-                            <p className="text-xl font-medium text-muted-foreground">Interactive Live Map Dashboard Preview</p>
-                        </div>
+                        <IncidentMap className="w-full" isAdmin={false} />
                     </motion.div>
                 </div>
             </section>

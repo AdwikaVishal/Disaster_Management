@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sensesafe.model.Incident;
 import com.sensesafe.model.User;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -21,6 +22,9 @@ import java.util.ArrayList;
 
 @Service
 public class MLAnalysisService {
+
+    @Autowired
+    private SystemConfigService systemConfigService;
 
     @Value("${ml.base-url}")
     private String mlBaseUrl;
@@ -70,6 +74,11 @@ public class MLAnalysisService {
     }
 
     public Map<String, Object> analyzeFraud(Incident incident, User reporter) {
+        // Check if AI risk scoring is enabled
+        if (!systemConfigService.isAiRiskScoringEnabled()) {
+            return getFallbackFraudAnalysis(incident, reporter);
+        }
+        
         try {
             Map<String, Object> fraudData = prepareFraudData(incident, reporter);
             

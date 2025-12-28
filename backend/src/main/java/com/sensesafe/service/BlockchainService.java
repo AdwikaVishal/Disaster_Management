@@ -19,6 +19,7 @@ import org.web3j.protocol.core.methods.response.EthSendTransaction;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.sensesafe.model.AuditLog;
 
 import java.io.IOException;
 import java.math.BigInteger;
@@ -332,5 +333,50 @@ public class BlockchainService {
                 "blockNumber", 12345685L
             )
         };
+    }
+
+    /**
+     * Log generic audit action on blockchain
+     */
+    public Map<String, Object> logGenericAudit(AuditLog auditLog) {
+        Map<String, Object> result = new HashMap<>();
+        
+        try {
+            initialize();
+            if (!isInitialized) {
+                throw new RuntimeException("Blockchain service not initialized");
+            }
+
+            // Create function call for generic audit logging
+            List<Type> inputParameters = Arrays.asList(
+                new Utf8String(auditLog.getActionType()),
+                new Utf8String(auditLog.getUserId()),
+                new Utf8String(auditLog.getTargetType() != null ? auditLog.getTargetType() : ""),
+                new Utf8String(auditLog.getTargetId() != null ? auditLog.getTargetId() : ""),
+                new Utf8String(auditLog.getStatus())
+            );
+            
+            Function function = new Function(
+                "logGenericAudit",
+                inputParameters,
+                Collections.emptyList()
+            );
+
+            String txHash = executeContractFunction(function);
+            
+            result.put("success", true);
+            result.put("transactionHash", txHash);
+            result.put("message", "Generic audit logged on blockchain");
+            result.put("actionType", auditLog.getActionType());
+            result.put("userId", auditLog.getUserId());
+            result.put("timestamp", System.currentTimeMillis() / 1000);
+            
+        } catch (Exception e) {
+            result.put("success", false);
+            result.put("error", e.getMessage());
+            System.err.println("Failed to log generic audit on blockchain: " + e.getMessage());
+        }
+        
+        return result;
     }
 }

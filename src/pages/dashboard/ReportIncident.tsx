@@ -314,17 +314,6 @@ export default function ReportIncident() {
                                     onChange={handleChange}
                                     required
                                 />
-                                <Button
-                                    type="button"
-                                    size="sm"
-                                    variant="secondary"
-                                    className="absolute right-3 bottom-3"
-                                    onClick={analyzeIncident}
-                                    disabled={aiLoading || !formData.description}
-                                >
-                                    {aiLoading ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <Sparkles className="w-3 h-3 mr-1 text-purple-500" />}
-                                    Analyze with AI
-                                </Button>
                             </div>
 
                             {/* AI Result Display */}

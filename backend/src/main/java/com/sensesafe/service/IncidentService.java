@@ -49,6 +49,12 @@ public class IncidentService {
     @Autowired
     private WebSocketService webSocketService;
 
+    @Autowired
+    private AuditLogService auditLogService;
+
+    @Autowired
+    private SystemConfigService systemConfigService;
+
     public Incident createIncident(Incident incident) {
         // Set initial values
         incident.setCreatedAt(LocalDateTime.now());
@@ -85,8 +91,23 @@ public class IncidentService {
         // Broadcast new incident via WebSocket
         webSocketService.broadcastNewIncident(savedIncident);
 
-        // Auto-dispatch emergency services for critical incidents
-        if (savedIncident.getSeverity() == Incident.Severity.CRITICAL) {
+        // Log incident creation in audit log
+        auditLogService.logAction(
+            "INCIDENT_REPORTED",
+            incident.getReporter().getId().toString(),
+            incident.getReporter().getRole().name(),
+            "INCIDENT",
+            savedIncident.getId().toString(),
+            String.format("%s incident reported in %s", incident.getType().name(), incident.getAddress()),
+            null, // IP address would be set by controller
+            null, // User agent would be set by controller
+            "SUCCESS",
+            null
+        );
+
+        // Auto-dispatch emergency services for critical incidents (if enabled)
+        if (savedIncident.getSeverity() == Incident.Severity.CRITICAL && 
+            systemConfigService.isAutoDispatchEnabled()) {
             autoDispatchEmergencyServices(savedIncident);
         }
 
@@ -166,6 +187,28 @@ public class IncidentService {
         }
 
         Incident updatedIncident = incidentRepository.save(incident);
+
+        // Log status change in audit log
+        String auditAction = switch (newStatus) {
+            case VERIFIED -> "INCIDENT_VERIFIED";
+            case RESOLVED -> "INCIDENT_RESOLVED";
+            case REJECTED -> "INCIDENT_REJECTED";
+            case IN_PROGRESS -> "INCIDENT_IN_PROGRESS";
+            default -> "INCIDENT_STATUS_CHANGED";
+        };
+
+        auditLogService.logAction(
+            auditAction,
+            adminId != null ? adminId.toString() : "System",
+            "ADMIN",
+            "INCIDENT",
+            incidentId.toString(),
+            String.format("Incident status changed from %s to %s", oldStatus.name(), newStatus.name()),
+            null, // IP address would be set by controller
+            null, // User agent would be set by controller
+            "SUCCESS",
+            null
+        );
 
         // Send status update notifications
         notificationService.notifyIncidentStatusUpdate(updatedIncident, oldStatus);
@@ -351,6 +394,20 @@ public class IncidentService {
             response.setDistanceKm(incident.getDistanceToResponder());
 
             emergencyResponseRepository.save(response);
+
+            // Log resource allocation in audit log
+            auditLogService.logAction(
+                "RESOURCE_ASSIGNED",
+                "System",
+                "SYSTEM",
+                "INCIDENT",
+                incident.getId().toString(),
+                String.format("%s assigned to incident", serviceType.name()),
+                null,
+                null,
+                "SUCCESS",
+                null
+            );
 
             // Log resource allocation on blockchain (async to avoid blocking)
             try {

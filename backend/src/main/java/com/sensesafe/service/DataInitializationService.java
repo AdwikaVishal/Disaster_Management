@@ -29,6 +29,9 @@ public class DataInitializationService implements CommandLineRunner {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private SystemConfigService systemConfigService;
+
     @Override
     public void run(String... args) throws Exception {
         if (userRepository.count() == 0) {
@@ -49,7 +52,7 @@ public class DataInitializationService implements CommandLineRunner {
         admin.setTrustScore(100.0);
         admin.setLatitude(40.7128);
         admin.setLongitude(-74.0060);
-        admin.setAddress("New York, NY");
+        admin.setAddress("Jaipur, Rajasthan, India");
         admin.setPhoneNumber("+1-555-ADMIN");
         admin.setEmergencyContact1("admin-emergency@sensesafe.com");
         userRepository.save(admin);
@@ -68,8 +71,8 @@ public class DataInitializationService implements CommandLineRunner {
         user1.setVerifiedReports(4);
         user1.setLatitude(40.7589);
         user1.setLongitude(-73.9851);
-        user1.setAddress("Manhattan, NY");
-        user1.setPhoneNumber("+1-555-0101");
+        user1.setAddress("Mumbai, Maharashtra, India");
+        user1.setPhoneNumber("+91 1234456799");
         user1.setEmergencyContact1("jane@example.com");
         userRepository.save(user1);
 
@@ -86,8 +89,8 @@ public class DataInitializationService implements CommandLineRunner {
         user2.setVerifiedReports(7);
         user2.setLatitude(40.7505);
         user2.setLongitude(-73.9934);
-        user2.setAddress("Brooklyn, NY");
-        user2.setPhoneNumber("+1-555-0102");
+        user2.setAddress("Bengaluru, Karnataka, India");
+        user2.setPhoneNumber("+91 1562893729");
         user2.setEmergencyContact1("john@example.com");
         userRepository.save(user2);
 
@@ -119,7 +122,7 @@ public class DataInitializationService implements CommandLineRunner {
         incident1.setStatus(Incident.Status.IN_PROGRESS);
         incident1.setLatitude(40.7128);
         incident1.setLongitude(-74.0060);
-        incident1.setAddress("123 Main St, New York, NY");
+        incident1.setAddress("A-Road, Bengaluru");
         incident1.setReporter(user1);
         incident1.setUpvotes(15);
         incident1.setFlags(0);
@@ -145,7 +148,7 @@ public class DataInitializationService implements CommandLineRunner {
         incident2.setStatus(Incident.Status.VERIFIED);
         incident2.setLatitude(40.7589);
         incident2.setLongitude(-73.9851);
-        incident2.setAddress("I-95 North, Mile Marker 45");
+        incident2.setAddress(" Mile Marker 45,Punjab");
         incident2.setReporter(user2);
         incident2.setUpvotes(8);
         incident2.setFlags(1);
@@ -171,7 +174,7 @@ public class DataInitializationService implements CommandLineRunner {
         incident3.setStatus(Incident.Status.NEW);
         incident3.setLatitude(40.7505);
         incident3.setLongitude(-73.9934);
-        incident3.setAddress("456 Oak Street, Brooklyn, NY");
+        incident3.setAddress("456 Street, Delhi, India");
         incident3.setReporter(volunteer);
         incident3.setUpvotes(12);
         incident3.setFlags(0);
@@ -202,7 +205,7 @@ public class DataInitializationService implements CommandLineRunner {
         application.setPreferredLatitude(40.7589);
         application.setPreferredLongitude(-73.9851);
         application.setMaxDistanceKm(15.0);
-        application.setAlternatePhone("+1-555-0104");
+        application.setAlternatePhone("+91 2345612455");
         application.setEmergencyContact("emergency-contact@example.com");
         application.setCreatedAt(LocalDateTime.now().minusDays(2));
         volunteerApplicationRepository.save(application);
@@ -211,5 +214,9 @@ public class DataInitializationService implements CommandLineRunner {
         System.out.println("Admin credentials: admin / admin123");
         System.out.println("User credentials: john_doe / password123, jane_smith / password123");
         System.out.println("Volunteer credentials: volunteer1 / password123");
+        
+        // Initialize system configurations
+        systemConfigService.initializeDefaultConfigurations();
+        System.out.println("System configurations initialized successfully!");
     }
 }

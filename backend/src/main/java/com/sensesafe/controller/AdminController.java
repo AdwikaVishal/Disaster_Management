@@ -2,12 +2,17 @@ package com.sensesafe.controller;
 
 import com.sensesafe.model.Incident;
 import com.sensesafe.model.User;
+import com.sensesafe.model.SystemConfig;
 import com.sensesafe.service.IncidentService;
 import com.sensesafe.service.UserService;
 import com.sensesafe.service.VolunteerService;
+import com.sensesafe.service.MLAnalysisService;
+import com.sensesafe.service.SystemConfigService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -29,6 +34,12 @@ public class AdminController {
 
     @Autowired
     private VolunteerService volunteerService;
+
+    @Autowired
+    private MLAnalysisService mlAnalysisService;
+
+    @Autowired
+    private SystemConfigService systemConfigService;
 
     @GetMapping("/dashboard")
     public ResponseEntity<?> getDashboardData() {
@@ -174,6 +185,74 @@ public class AdminController {
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("analytics", analytics);
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    @GetMapping("/system-config")
+    public ResponseEntity<?> getSystemConfig() {
+        try {
+            Map<String, Object> configStatus = systemConfigService.getEmergencyControlStatus();
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("systemConfig", configStatus);
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    @PutMapping("/system-config/{configKey}")
+    public ResponseEntity<?> updateSystemConfig(@PathVariable String configKey, 
+                                               @RequestBody Map<String, Object> request) {
+        try {
+            Boolean enabled = (Boolean) request.get("enabled");
+            String updatedBy = getCurrentUsername();
+            
+            SystemConfig updatedConfig = systemConfigService.updateConfiguration(configKey, enabled, updatedBy);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("config", Map.of(
+                    "key", updatedConfig.getConfigKey(),
+                    "enabled", updatedConfig.getConfigValue(),
+                    "description", updatedConfig.getDescription(),
+                    "updatedBy", updatedConfig.getUpdatedBy(),
+                    "updatedAt", updatedConfig.getUpdatedAt()
+            ));
+            response.put("message", "System configuration updated successfully");
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    @PostMapping("/system-config/initialize")
+    public ResponseEntity<?> initializeSystemConfig() {
+        try {
+            systemConfigService.initializeDefaultConfigurations();
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "System configurations initialized successfully");
             
             return ResponseEntity.ok(response);
             
@@ -340,5 +419,17 @@ public class AdminController {
         details.put("emergencyContact2", user.getEmergencyContact2());
         details.put("emergencyContact3", user.getEmergencyContact3());
         return details;
+    }
+    
+    /**
+     * Get current authenticated username
+     * @return username string
+     */
+    private String getCurrentUsername() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.isAuthenticated()) {
+            return authentication.getName();
+        }
+        return "SYSTEM";
     }
 }

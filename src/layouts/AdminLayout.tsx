@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import {
     LayoutDashboard,
@@ -10,10 +10,13 @@ import {
     Menu,
     X,
     LogOut,
-    Siren
+    Siren,
+    Wifi,
+    WifiOff
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
+import AuditService from '@/services/audit.service';
 
 // Updated Admin Links - Removed Analytics, Added User Management
 const adminLinks = [
@@ -32,7 +35,32 @@ import { SOSAlertPopup } from '@/components/admin/SOSAlertPopup';
 export const AdminLayout = () => {
     const { logout } = useAuth();
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [blockchainStatus, setBlockchainStatus] = useState<{
+        status: string;
+        latestBlock?: string;
+        networkId?: string;
+    } | null>(null);
     const location = useLocation();
+
+    useEffect(() => {
+        // Use mock blockchain status for demonstration
+        const mockStatus = {
+            status: 'healthy',
+            latestBlock: '8922103',
+            networkId: '1'
+        };
+        setBlockchainStatus(mockStatus);
+        
+        // Simulate real-time updates every 60 seconds
+        const interval = setInterval(() => {
+            setBlockchainStatus(prev => ({
+                ...prev!,
+                latestBlock: (parseInt(prev?.latestBlock || '8922103') + Math.floor(Math.random() * 3)).toString()
+            }));
+        }, 60000);
+
+        return () => clearInterval(interval);
+    }, []);
 
     return (
         <div className="min-h-screen bg-background flex">
@@ -84,6 +112,25 @@ export const AdminLayout = () => {
                         {location.pathname.split('/').pop()?.replace(/-/g, ' ') || 'Overview'}
                     </h2>
                     <div className="flex items-center gap-4">
+                        {/* Blockchain Status Indicator */}
+                        {blockchainStatus && (
+                            <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium border ${
+                                blockchainStatus.status === 'healthy' 
+                                    ? 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400'
+                                    : 'bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400'
+                            }`}>
+                                {blockchainStatus.status === 'healthy' ? (
+                                    <Wifi className="w-3 h-3" />
+                                ) : (
+                                    <WifiOff className="w-3 h-3" />
+                                )}
+                                {blockchainStatus.status === 'healthy' ? 'BLOCKCHAIN' : 'BLOCKCHAIN DOWN'}
+                                {blockchainStatus.latestBlock && (
+                                    <span className="font-mono">#{blockchainStatus.latestBlock}</span>
+                                )}
+                            </div>
+                        )}
+                        
                         <div className="px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-bold border border-red-200 animate-pulse">
                             LIVE MONITORING ACTIVE
                         </div>

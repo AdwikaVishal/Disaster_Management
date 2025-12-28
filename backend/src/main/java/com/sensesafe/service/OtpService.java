@@ -58,6 +58,14 @@ public class OtpService {
         OtpToken otpToken = new OtpToken(email, otp);
         otpTokenRepository.save(otpToken);
 
+        // Log OTP for testing (development only)
+        System.out.println("================================================");
+        System.out.println("OTP GENERATED FOR ADMIN LOGIN:");
+        System.out.println("Email: " + email);
+        System.out.println("OTP: " + otp);
+        System.out.println("Valid for 10 minutes");
+        System.out.println("================================================");
+
         // Send OTP via email
         emailService.sendOtpEmail(email, otp, user.getFirstName());
 

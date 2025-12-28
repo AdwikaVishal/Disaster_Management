@@ -69,7 +69,14 @@ export const IncidentService = {
     // Get all recent incidents - REAL BACKEND
     getAllIncidents: async (hours: number = 24): Promise<{ success: boolean; incidents?: Incident[]; total?: number; message?: string }> => {
         try {
-            const response = await fetch(`${API_URL}?hours=${hours}`);
+            const token = AuthService.getToken();
+            const headers: HeadersInit = {
+                'Content-Type': 'application/json'
+            };
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+            const response = await fetch(`${API_URL}?hours=${hours}`, { headers });
             const result = await response.json();
             return result;
         } catch (error) {
@@ -81,7 +88,14 @@ export const IncidentService = {
     // Get nearby incidents - REAL BACKEND
     getNearbyIncidents: async (latitude: number, longitude: number, radiusKm: number = 10): Promise<{ success: boolean; incidents?: Incident[]; message?: string }> => {
         try {
-            const response = await fetch(`${API_URL}/nearby?latitude=${latitude}&longitude=${longitude}&radiusKm=${radiusKm}`);
+            const token = AuthService.getToken();
+            const headers: HeadersInit = {
+                'Content-Type': 'application/json'
+            };
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+            const response = await fetch(`${API_URL}/nearby?latitude=${latitude}&longitude=${longitude}&radiusKm=${radiusKm}`, { headers });
             const result = await response.json();
             return result;
         } catch (error) {
@@ -93,7 +107,14 @@ export const IncidentService = {
     // Get location info from coordinates - REAL BACKEND
     getLocationInfo: async (latitude: number, longitude: number): Promise<{ success: boolean; locationInfo?: any; message?: string }> => {
         try {
-            const response = await fetch(`${API_URL}/location-info?latitude=${latitude}&longitude=${longitude}`);
+            const token = AuthService.getToken();
+            const headers: HeadersInit = {
+                'Content-Type': 'application/json'
+            };
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+            const response = await fetch(`${API_URL}/location-info?latitude=${latitude}&longitude=${longitude}`, { headers });
             const result = await response.json();
             return result;
         } catch (error) {
@@ -156,6 +177,28 @@ export const IncidentService = {
         } catch (error) {
             console.error('ML health check error:', error);
             return { success: false, message: 'Failed to check ML health' };
+        }
+    },
+
+    // Update Incident Status - REAL BACKEND
+    updateIncidentStatus: async (id: number, status: 'VERIFIED' | 'REJECTED' | 'RESOLVED'): Promise<{ success: boolean; incident?: Incident; message?: string }> => {
+        try {
+            const token = AuthService.getToken();
+            if (!token) return { success: false, message: 'Not authenticated' };
+
+            const response = await fetch(`${API_URL}/${id}/status`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ status })
+            });
+            const result = await response.json();
+            return result;
+        } catch (error) {
+            console.error('Update status error:', error);
+            return { success: false, message: 'Failed to update status' };
         }
     }
 };

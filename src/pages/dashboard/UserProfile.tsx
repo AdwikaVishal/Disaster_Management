@@ -50,7 +50,7 @@ export default function UserProfile() {
                         </div>
                         <div className="space-y-2">
                             <Label>Phone Number</Label>
-                            <Input defaultValue="+1 234 567 890" />
+                            <Input defaultValue="+91 1234790289" />
                         </div>
                         <Button>Save Changes</Button>
                     </CardContent>
@@ -69,7 +69,7 @@ export default function UserProfile() {
                                 </div>
                                 <div>
                                     <p className="font-medium">Jane Doe (Wife)</p>
-                                    <p className="text-sm text-muted-foreground">+1 987 654 321</p>
+                                    <p className="text-sm text-muted-foreground">+91 87645637289</p>
                                 </div>
                             </div>
                             <Button variant="ghost" size="sm">Edit</Button>

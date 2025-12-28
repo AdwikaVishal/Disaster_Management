@@ -26,6 +26,9 @@ public class NotificationService {
     @Autowired
     private GeolocationService geolocationService;
 
+    @Autowired
+    private SystemConfigService systemConfigService;
+
     @Async
     public void notifyNewIncident(Incident incident) {
         // Create notification payload
@@ -35,17 +38,28 @@ public class NotificationService {
         notification.put("title", incident.getTitle());
         notification.put("incidentType", incident.getType().name());
         notification.put("severity", incident.getSeverity().name());
-        notification.put("location", Map.of(
-            "latitude", incident.getLatitude(),
-            "longitude", incident.getLongitude(),
-            "address", incident.getAddress()
-        ));
+        
+        // Check if lockdown mode is enabled - restrict location details
+        if (systemConfigService.isLockdownModeEnabled()) {
+            notification.put("location", Map.of(
+                "address", incident.getAddress(),
+                "restricted", true,
+                "message", "Location details restricted due to lockdown mode"
+            ));
+        } else {
+            notification.put("location", Map.of(
+                "latitude", incident.getLatitude(),
+                "longitude", incident.getLongitude(),
+                "address", incident.getAddress()
+            ));
+        }
+        
         notification.put("timestamp", incident.getCreatedAt());
 
         // Send to all connected clients
         messagingTemplate.convertAndSend("/topic/incidents", notification);
 
-        // Send to nearby users
+        // Send to nearby users (with lockdown restrictions)
         notifyNearbyUsers(incident, notification);
 
         // Send to admins
