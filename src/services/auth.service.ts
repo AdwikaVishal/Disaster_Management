@@ -60,11 +60,11 @@ export const AuthService = {
     // Real backend login
     loginUser: async (data: LoginData): Promise<AuthResponse> => {
         try {
-            // Updated to use the correct endpoint path: /auth/login-user
             const response = await fetch(`${API_URL}/auth/login-user`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data),
+                credentials: 'include',
             });
 
             const result = await handleResponse(response);
